@@ -33,7 +33,10 @@ namespace Unity.Core
                     (uint)NameSearchOptions.None,
                     out var symbols
                 );
-
+                if(symbols.count == 0)
+                {
+                    Debug.LogErrorFormat("Count not find PdbSymbol {0}.", GetCustomAttribute<PdbSymbolAttribute>(field).SymbolName);
+                }
                 foreach (IDiaSymbol symbol in symbols)
                 {
                     var address = new IntPtr(module.BaseAddress.ToInt64() + symbol.relativeVirtualAddress);
