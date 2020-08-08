@@ -35,7 +35,7 @@ namespace Unity.Core
                 );
                 if(symbols.count == 0)
                 {
-                    Debug.LogErrorFormat("Count not find PdbSymbol {0}.", GetCustomAttribute<PdbSymbolAttribute>(field).SymbolName);
+                    Debug.LogWarningFormat("Count not find PdbSymbol {0}.", GetCustomAttribute<PdbSymbolAttribute>(field).SymbolName);
                 }
                 foreach (IDiaSymbol symbol in symbols)
                 {

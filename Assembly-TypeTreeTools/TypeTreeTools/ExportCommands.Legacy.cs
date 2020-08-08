@@ -42,13 +42,12 @@ namespace TypeTreeTools
             Directory.CreateDirectory(OutputDirectory);
             File.WriteAllText(Path.Combine(OutputDirectory, "classes.json"), JsonConvert.SerializeObject(dictionary));
         }
-
         [MenuItem("Tools/Type Tree/Legacy/Export Struct Data")]
         static unsafe void ExportStructData()
         {
             Directory.CreateDirectory(OutputDirectory);
-            var flags    = TransferInstructionFlags.SerializeGameRelease;
-            using var bw = new BinaryWriter(File.OpenWrite(Path.Combine(OutputDirectory, "structs.dat")));   
+            var flags = TransferInstructionFlags.SerializeGameRelease;
+            using var bw = new BinaryWriter(File.OpenWrite(Path.Combine(OutputDirectory, "structs.dat")));
 
             foreach (char c in Application.unityVersion)
                 bw.Write((byte)c);
@@ -57,13 +56,21 @@ namespace TypeTreeTools
             bw.Write((int)Application.platform);
             bw.Write((byte)1); // hasTypeTrees
             var countPosition = (int)bw.BaseStream.Position;
-            var typeCount     = 0;
-
+            var typeCount = 0;
+            Debug.LogFormat("Writing RunTimeTypes");
             for (int i = 0; i < RuntimeTypes.Count; i++)
             {
                 var type = RuntimeTypes.Types[i];
                 var iter = type;
-
+                Debug.LogFormat("Type {0} Child Class {1}, {2}, {3}, {4}, {5}",
+                    i,
+                    Marshal.PtrToStringAnsi(type->ClassNamespace),
+                    Marshal.PtrToStringAnsi(type->ClassName),
+                    Marshal.PtrToStringAnsi(type->Module),
+                    type->PersistentTypeID,
+                    type->Size
+                    );
+                Debug.LogFormat("Type {0} getting base type", i);
                 while (iter->IsAbstract)
                 {
                     if (iter->Base == null)
@@ -71,27 +78,39 @@ namespace TypeTreeTools
 
                     iter = iter->Base;
                 }
-
+                Debug.LogFormat("Type {0} BaseType is {1}, {2}, {3}, {4}, {5}",
+                    i,
+                    Marshal.PtrToStringAnsi(type->ClassNamespace),
+                    Marshal.PtrToStringAnsi(type->ClassName),
+                    Marshal.PtrToStringAnsi(type->Module),
+                    type->PersistentTypeID,
+                    type->Size
+                    );
+                Debug.LogFormat("Type {0} Getting native object", i);
                 var obj = NativeObject.GetOrProduce(*iter);
 
                 if (obj == null)
                     continue;
+                Debug.LogFormat("Type {0} Produced object {1}", i, obj->InstanceID);
 
+                Debug.LogFormat("Type {0} Getting Type Tree", i);
                 if (obj->GetTypeTree(flags, out var tree))
                 {
+                    Debug.LogFormat("Type {0} Getting PersistentTypeID", i);
                     // Shouldn't this write type.PersistentTypeID instead?
                     // I'm leaving it as iter.PersistentTypeID for consistency
                     // with existing C++ code that generates structs.dat
                     bw.Write((int)iter->PersistentTypeID);
 
+                    Debug.LogFormat("Type {0} Getting GUID", i);
                     // GUID
                     for (int j = 0, n = (int)iter->PersistentTypeID < 0 ? 0x20 : 0x10; j < n; ++j)
                         bw.Write((byte)0);
-
+                    Debug.LogFormat("Type {0} Creating Binary Dump", i);
                     TypeTreeUtility.CreateBinaryDump(tree, bw);
                     typeCount++;
                 }
-
+                Debug.LogFormat("Type {0} Destroy if Not Singleton or Persistent", i);
                 NativeObject.DestroyIfNotSingletonOrPersistent(obj);
 
             NextType:
@@ -106,13 +125,13 @@ namespace TypeTreeTools
         static unsafe void ExportStructDump()
         {
             Directory.CreateDirectory(OutputDirectory);
-            var flags    = TransferInstructionFlags.SerializeGameRelease;
+            var flags = TransferInstructionFlags.SerializeGameRelease;
             using var tw = new StreamWriter(Path.Combine(OutputDirectory, "structs.dump"));
 
             for (int i = 0; i < RuntimeTypes.Count; i++)
             {
-                var type        = RuntimeTypes.Types[i];
-                var iter        = type;
+                var type = RuntimeTypes.Types[i];
+                var iter = type;
                 var inheritance = string.Empty;
 
                 while (true)
@@ -123,7 +142,7 @@ namespace TypeTreeTools
                         break;
 
                     inheritance += " <- ";
-                    iter         = iter->Base;
+                    iter = iter->Base;
                 }
 
                 tw.WriteLine("\n// classID{{{0}}}: {1}", type->PersistentTypeID, inheritance);
@@ -148,6 +167,34 @@ namespace TypeTreeTools
                     TypeTreeUtility.CreateTextDump(tree, tw);
 
                 NativeObject.DestroyIfNotSingletonOrPersistent(obj);
+            }
+        }
+        [MenuItem("Tools/Type Tree/Legacy/Debug Struct")]
+        static unsafe void DebugStruct()
+        {
+            using var tw = new StreamWriter(Path.Combine(OutputDirectory, "structs_debug.txt"));
+            var structTypes = new Type[]
+            {
+                typeof(TypeTree),
+                typeof(NativeObject),
+                typeof(RuntimeTypeInfo),
+                typeof(RuntimeTypes.RuntimeTypeArray),
+                typeof(TypeTreeIterator),
+                typeof(TypeTreeNode),
+                typeof(TypeTreeShareableData),
+                typeof(MemLabelId),
+                typeof(AllocationRootWithSalt),
+                typeof(DerivedFromInfo),
+                typeof(DynamicArray<TypeTree>)
+            };
+            foreach(var type in structTypes)
+            {
+                tw.WriteLine("{0} Size {1} (0x{1:X})", type.Name, Marshal.SizeOf(type));
+                foreach(var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                {
+                    tw.WriteLine("  {0} {1}\tOffset {2} (0x{2:X})", field.FieldType.Name, field.Name, Marshal.OffsetOf(type, field.Name).ToInt32());
+                }
+                tw.WriteLine();
             }
         }
     }
