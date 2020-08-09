@@ -56,3 +56,23 @@ struct dynamic_array
 	size_t size;
 	size_t cap; // < 0 => data is in union{T*, T[N]}
 }; // 0x14
+
+struct RTTIClass {
+	RTTIClass* base;
+	void* unk1; // probably constructor
+	const char* name;
+	const char* unk3;
+	const char* unk4;
+	int classID;
+	int objectSize;
+	int typeIndex;
+	int unk5;
+	bool isAbstract;
+	bool unk6;
+	bool unk7;
+};
+struct RuntimeTypeArray
+{
+	size_t count;
+	RTTIClass* Types[1];
+};

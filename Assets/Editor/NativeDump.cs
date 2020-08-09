@@ -11,13 +11,20 @@ namespace TypeTreeTools
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void DumpStructDebug();
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void ExportStringData(string modulePath);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void ExportClassesJson(string modulePath);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate ulong GetRVA(string modulePath, string symbolName);
-        [MenuItem("Tools/Dump/TestRVA")]
-        static void TestRVA()
+        [MenuItem("Tools/Dump/Export String Data")]
+        static void DoExportStringData()
         {
-            var module = System.Diagnostics.Process.GetCurrentProcess().MainModule;
-            var result = Invoke<ulong, GetRVA>(module.FileName, "?GenerateTypeTree@@YAXAEBVObject@@AEAVTypeTree@@W4TransferInstructionFlags@@@Z");
-            Debug.Log($"RVA={result:X}");
+            Invoke<ExportStringData>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+        }
+        [MenuItem("Tools/Dump/Export Classes JSON")]
+        static void DoExportClassesJson()
+        {
+            Invoke<ExportClassesJson>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
         }
         [MenuItem("Tools/Dump/Dump Struct Debug")]
         static void DoTestDump()

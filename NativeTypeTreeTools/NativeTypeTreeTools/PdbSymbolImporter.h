@@ -6,6 +6,7 @@ class PdbSymbolImporter {
 	IDiaSymbol* pGlobalSymbol;
 public:
 	bool LoadFromExe(const char* exePath);
-	bool GetRVA(const char* symbolPath, DWORD& rva);
+	bool GetRVA(const char* symolName, DWORD& rva);
+	bool GetAddress(const char* symolName, unsigned long long& addr);
 	~PdbSymbolImporter();
 };
