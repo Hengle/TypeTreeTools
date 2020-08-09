@@ -9,7 +9,7 @@
         [PdbSymbol("?ms_runtimeTypes@RTTI@@0URuntimeTypeArray@1@A")]
         static readonly RuntimeTypeArray* ms_runtimeTypes;
 
-        unsafe struct RuntimeTypeArray
+        internal unsafe struct RuntimeTypeArray
         {
             public readonly uint Count;
             public RuntimeTypeInfo* First;
