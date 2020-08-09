@@ -5,6 +5,7 @@ using System.Diagnostics;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Compilation;
+using System.Linq;
 
 namespace TypeTreeTools
 {
@@ -19,6 +20,24 @@ namespace TypeTreeTools
             ".", "a", "b", "rc", "f"
         };
 
+        static string[] GetDependencies(Assembly assembly)
+        {
+            // Older versions of unity don't include Mono/MonoBleedingEdge libraries 
+            // (mscorlib.dll, System.dll, System.Core.dll and System.Xml.dll)
+            // in assembly.allReferences
+#if UNITY_2017
+            var result = assembly.allReferences.ToList();
+            var currentAssembly = System.Reflection.Assembly.Load(assembly.name);
+            foreach (var name in currentAssembly.GetReferencedAssemblies())
+            {
+                var reference = System.Reflection.Assembly.Load(name);
+                result.Add(reference.Location);
+            }
+            return result.Distinct().ToArray();
+#else
+        return assembly.allReferences;
+#endif
+        }
         [MenuItem("Tools/Build TypeTreeTools.dll")]
         static void BuildTypeTreeTools()
         {
@@ -36,7 +55,7 @@ namespace TypeTreeTools
                 xw.WriteStartElement("PropertyGroup");
 
                 var version = Application.unityVersion;
-                var split   = Application.unityVersion.Split(VersionSplitChars, StringSplitOptions.RemoveEmptyEntries);
+                var split = Application.unityVersion.Split(VersionSplitChars, StringSplitOptions.RemoveEmptyEntries);
                 xw.WriteStartElement("EditorVersion");
                 xw.WriteString(version);
                 xw.WriteEndElement();
@@ -63,7 +82,7 @@ namespace TypeTreeTools
                     xw.WriteEndElement();
 
                     xw.WriteStartElement("ItemGroup");
-                    foreach (var reference in assembly.allReferences)
+                    foreach (var reference in GetDependencies(assembly))
                     {
                         var name = Path.GetFileNameWithoutExtension(reference);
                         var path = Path.GetFullPath(reference);
