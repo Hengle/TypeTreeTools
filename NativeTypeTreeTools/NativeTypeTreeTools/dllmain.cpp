@@ -61,57 +61,66 @@ void InitBindings(const char* moduleName) {
 
 }
 extern "C" {
+#define MEMBER_SIZE(type, field) sizeof(((type *)0)->field)
+#define LOG_TYPE(type) Log("%s: %d (0x%x)\n", typeid(type).name(), sizeof(type), sizeof(type))
+#define LOG_MEMBER(type, field) Log("    %s: offset %d (0x%x) size %d (0x%x)\n", #field, offsetof(type, field), offsetof(type, field), MEMBER_SIZE(type, field), MEMBER_SIZE(type, field));
     EXPORT void DumpStructDebug() { 
-        Log("%s: %d (0x%x)\n", typeid(Object__RTTI).name(), sizeof(Object__RTTI), sizeof(Object__RTTI));
-        Log("    %s: %d (0x%x)\n", "base", offsetof(Object__RTTI, base), offsetof(Object__RTTI, base));
-        Log("    %s: %d (0x%x)\n", "factory", offsetof(Object__RTTI, factory), offsetof(Object__RTTI, factory));
-        Log("    %s: %d (0x%x)\n", "className", offsetof(Object__RTTI, className), offsetof(Object__RTTI, className));
-        Log("    %s: %d (0x%x)\n", "size", offsetof(Object__RTTI, size), offsetof(Object__RTTI, size));
-        Log("    %s: %d (0x%x)\n", "isAbstract", offsetof(Object__RTTI, isAbstract), offsetof(Object__RTTI, isAbstract));
-        Log("    %s: %d (0x%x)\n", "unk0", offsetof(Object__RTTI, unk0), offsetof(Object__RTTI, unk0));
-        Log("    %s: %d (0x%x)\n", "unk1", offsetof(Object__RTTI, unk1), offsetof(Object__RTTI, unk1));
+        LOG_TYPE(Object__RTTI);
+        LOG_MEMBER(Object__RTTI, base);
+        LOG_MEMBER(Object__RTTI, factory);
+        LOG_MEMBER(Object__RTTI, className);
+        LOG_MEMBER(Object__RTTI, size);
+        LOG_MEMBER(Object__RTTI, isAbstract);
+        LOG_MEMBER(Object__RTTI, unk0);
+        LOG_MEMBER(Object__RTTI, unk1);
         Log("\n");
 
-        Log("%s: %d (0x%x)\n", typeid(TypeTreeNode).name(), sizeof(TypeTreeNode), sizeof(TypeTreeNode));
-        Log("    %s: %d (0x%x)\n", "m_Version", offsetof(TypeTreeNode, m_Version), offsetof(TypeTreeNode, m_Version));
-        Log("    %s: %d (0x%x)\n", "m_Depth", offsetof(TypeTreeNode, m_Depth), offsetof(TypeTreeNode, m_Depth));
-        Log("    %s: %d (0x%x)\n", "m_IsArray", offsetof(TypeTreeNode, m_IsArray), offsetof(TypeTreeNode, m_IsArray));
-        Log("    %s: %d (0x%x)\n", "m_Type", offsetof(TypeTreeNode, m_Type), offsetof(TypeTreeNode, m_Type));
-        Log("    %s: %d (0x%x)\n", "m_Name", offsetof(TypeTreeNode, m_Name), offsetof(TypeTreeNode, m_Name));
-        Log("    %s: %d (0x%x)\n", "m_ByteSize", offsetof(TypeTreeNode, m_ByteSize), offsetof(TypeTreeNode, m_ByteSize));
-        Log("    %s: %d (0x%x)\n", "m_Index", offsetof(TypeTreeNode, m_Index), offsetof(TypeTreeNode, m_Index));
-        Log("    %s: %d (0x%x)\n", "m_MetaFlag", offsetof(TypeTreeNode, m_MetaFlag), offsetof(TypeTreeNode, m_MetaFlag));
+        LOG_TYPE(TypeTreeNode);
+        LOG_MEMBER(TypeTreeNode, m_Version);
+        LOG_MEMBER(TypeTreeNode, m_Depth);
+        LOG_MEMBER(TypeTreeNode, m_IsArray);
+        LOG_MEMBER(TypeTreeNode, m_Type);
+        LOG_MEMBER(TypeTreeNode, m_Name);
+        LOG_MEMBER(TypeTreeNode, m_ByteSize);
+        LOG_MEMBER(TypeTreeNode, m_Index);
+        LOG_MEMBER(TypeTreeNode, m_MetaFlag);
         Log("\n");
 
-        Log("%s: %d (0x%x)\n", typeid(MemLabelId).name(), sizeof(MemLabelId), sizeof(MemLabelId));
-        Log("    %s: %d (0x%x)\n", "id", offsetof(MemLabelId, id), offsetof(MemLabelId, id));
+        LOG_TYPE(MemLabelId);
+        LOG_MEMBER(MemLabelId, id);
         Log("\n");
 
-        Log("%s: %d (0x%x)\n", typeid(dynamic_array<int>).name(), sizeof(dynamic_array<int>), sizeof(dynamic_array<int>));
-        Log("    %s: %d (0x%x)\n", "data", offsetof(dynamic_array<int>, data), offsetof(dynamic_array<int>, data));
-        Log("    %s: %d (0x%x)\n", "label", offsetof(dynamic_array<int>, label), offsetof(dynamic_array<int>, label));
-        Log("    %s: %d (0x%x)\n", "size", offsetof(dynamic_array<int>, size), offsetof(dynamic_array<int>, size));
-        Log("    %s: %d (0x%x)\n", "cap", offsetof(dynamic_array<int>, cap), offsetof(dynamic_array<int>, cap));
+
+        LOG_TYPE(dynamic_array<int>);
+        LOG_MEMBER(dynamic_array<int>, data);
+        LOG_MEMBER(dynamic_array<int>, label);
+        LOG_MEMBER(dynamic_array<int>, size);
+        LOG_MEMBER(dynamic_array<int>, cap);
         Log("\n");
 
-        Log("%s: %d (0x%x)\n", typeid(RuntimeTypeArray).name(), sizeof(RuntimeTypeArray), sizeof(RuntimeTypeArray));
-        Log("    %s: %d (0x%x)\n", "count", offsetof(RuntimeTypeArray, count), offsetof(RuntimeTypeArray, count));
-        Log("    %s: %d (0x%x)\n", "Types", offsetof(RuntimeTypeArray, Types), offsetof(RuntimeTypeArray, Types));
+        LOG_TYPE(RuntimeTypeArray);
+        LOG_MEMBER(RuntimeTypeArray, count);
+        LOG_MEMBER(RuntimeTypeArray, Types);
         Log("\n");
 
-        Log("%s: %d (0x%x)\n", typeid(RTTIClass).name(), sizeof(RTTIClass), sizeof(RTTIClass));
-        Log("    %s: %d (0x%x)\n", "base", offsetof(RTTIClass, base), offsetof(RTTIClass, base));
-        Log("    %s: %d (0x%x)\n", "unk1", offsetof(RTTIClass, unk1), offsetof(RTTIClass, unk1));
-        Log("    %s: %d (0x%x)\n", "name", offsetof(RTTIClass, name), offsetof(RTTIClass, name));
-        Log("    %s: %d (0x%x)\n", "unk3", offsetof(RTTIClass, unk3), offsetof(RTTIClass, unk3));
-        Log("    %s: %d (0x%x)\n", "unk4", offsetof(RTTIClass, unk4), offsetof(RTTIClass, unk4));
-        Log("    %s: %d (0x%x)\n", "classID", offsetof(RTTIClass, classID), offsetof(RTTIClass, classID));
-        Log("    %s: %d (0x%x)\n", "objectSize", offsetof(RTTIClass, objectSize), offsetof(RTTIClass, objectSize));
-        Log("    %s: %d (0x%x)\n", "typeIndex", offsetof(RTTIClass, typeIndex), offsetof(RTTIClass, typeIndex));
-        Log("    %s: %d (0x%x)\n", "unk5", offsetof(RTTIClass, unk5), offsetof(RTTIClass, unk5));
-        Log("    %s: %d (0x%x)\n", "isAbstract", offsetof(RTTIClass, isAbstract), offsetof(RTTIClass, isAbstract));
-        Log("    %s: %d (0x%x)\n", "unk6", offsetof(RTTIClass, unk6), offsetof(RTTIClass, unk6));
-        Log("    %s: %d (0x%x)\n", "unk7", offsetof(RTTIClass, unk7), offsetof(RTTIClass, unk7));
+        LOG_TYPE(RuntimeTypeArray2);
+        LOG_MEMBER(RuntimeTypeArray2, count);
+        LOG_MEMBER(RuntimeTypeArray2, Types);
+        Log("\n");
+
+        LOG_TYPE(RTTIClass);
+        LOG_MEMBER(RTTIClass, base);
+        LOG_MEMBER(RTTIClass, unk1);
+        LOG_MEMBER(RTTIClass, name);
+        LOG_MEMBER(RTTIClass, unk3);
+        LOG_MEMBER(RTTIClass, unk4);
+        LOG_MEMBER(RTTIClass, classID);
+        LOG_MEMBER(RTTIClass, objectSize);
+        LOG_MEMBER(RTTIClass, typeIndex);
+        LOG_MEMBER(RTTIClass, unk5);
+        LOG_MEMBER(RTTIClass, isAbstract);
+        LOG_MEMBER(RTTIClass, unk6);
+        LOG_MEMBER(RTTIClass, unk7);
         Log("\n");
 
         CloseLog();

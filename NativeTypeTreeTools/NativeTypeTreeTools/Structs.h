@@ -76,3 +76,8 @@ struct RuntimeTypeArray
 	size_t count;
 	RTTIClass* Types[1];
 };
+struct RuntimeTypeArray2
+{
+	size_t count;
+	RTTIClass** Types;
+};

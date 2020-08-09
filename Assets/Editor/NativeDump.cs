@@ -14,8 +14,6 @@ namespace TypeTreeTools
         delegate void ExportStringData(string modulePath);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void ExportClassesJson(string modulePath);
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        delegate ulong GetRVA(string modulePath, string symbolName);
         [MenuItem("Tools/Dump/Export String Data")]
         static void DoExportStringData()
         {
