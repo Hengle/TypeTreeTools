@@ -11,6 +11,8 @@ namespace TypeTreeTools
 
         const string ProjectName = "TypeTreeTools";
 
+        public static bool Is64BitProcess { get { return IntPtr.Size == 8; } }
+
         public static string GetFullPath(string fileName)
         {
             if (File.Exists(fileName))
@@ -44,7 +46,8 @@ namespace TypeTreeTools
             process.WaitForExit();
             if(process.ExitCode != 0)
             {
-                Debug.LogError($"Error running command {exe} {arguments}");
+                Debug.LogErrorFormat("Error running command {0} {1}",
+                    exe, arguments);
             }
             File.WriteAllText("Assets/BuildResult.txt", strOutput);
         }
@@ -55,13 +58,15 @@ namespace TypeTreeTools
             msbuild = @"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe";
             if (!File.Exists(msbuild))
             {
-                throw new Exception($"Could not find executable msbuild.exe in path");
+                throw new Exception("Could not find executable msbuild.exe in path");
             }
-            var outDir = Environment.Is64BitProcess ?
+            var outDir = Is64BitProcess ?
                 Path.GetFullPath(@"CustomPlugins\x86_64") :
                 Path.GetFullPath(@"CustomPlugins\x86");
-            var platform = Environment.Is64BitProcess ? "x64" : "x86";
-            Start(msbuild, $"NativeTypeTreeTools.sln /t:Build /p:OutDir={outDir} /p:Platform={platform}");
+            var platform = Is64BitProcess ? "x64" : "x86";
+            var arguments = string.Format("NativeTypeTreeTools.sln /t:Build /p:OutDir={0} /p:Platform={1}",
+                outDir, platform);
+            Start(msbuild, arguments);
         }
     }
 }

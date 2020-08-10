@@ -29,20 +29,23 @@ namespace TypeTreeTools
         {
             Invoke<DumpStructDebug>();
         }
+
+        public static bool Is64BitProcess { get { return IntPtr.Size == 8; } }
+
         static IntPtr LoadTypeTreeLib()
         {
-            var libraryPath = Environment.Is64BitProcess ?
+            var libraryPath = Is64BitProcess ?
                 "CustomPlugins/x86_64/NativeTypeTreeTools.dll" :
                 "CustomPlugins/x86/NativeTypeTreeTools.dll";
             libraryPath = Path.GetFullPath(libraryPath);
             if (!File.Exists(libraryPath))
             {
-                throw new Exception($"Could not find file {libraryPath}");
+                throw new Exception(string.Format("Could not find file {0}", libraryPath));
             }
             var libPtr = LoadLibrary(libraryPath);
             if (libPtr == IntPtr.Zero)
             {
-                throw new Exception($"Failed to load native library {libraryPath}");
+                throw new Exception(string.Format("Failed to load native library {0}", libraryPath));
             }
             return libPtr;
         }
@@ -50,7 +53,7 @@ namespace TypeTreeTools
         {
             if (!FreeLibrary(libPtr))
             {
-                Debug.LogError($"Could not unload native library");
+                Debug.LogError("Could not unload native library");
             }
         }
         public static TRet Invoke<TRet, TDel>(params object[] pars)
