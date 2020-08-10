@@ -169,9 +169,21 @@ namespace TypeTreeTools
                 NativeObject.DestroyIfNotSingletonOrPersistent(obj);
             }
         }
+        static int GetSize(Type type)
+        {
+            if (type.IsEnum)
+            {
+                return Marshal.SizeOf(typeof(int));
+            }
+            else
+            {
+                return Marshal.SizeOf(type);
+            }
+        }
         [MenuItem("Tools/Type Tree/Legacy/Debug Struct")]
         static unsafe void DebugStruct()
         {
+            Directory.CreateDirectory(OutputDirectory);
             using var tw = new StreamWriter(Path.Combine(OutputDirectory, "structs_debug.txt"));
             var structTypes = new Type[]
             {
@@ -189,10 +201,10 @@ namespace TypeTreeTools
             };
             foreach(var type in structTypes)
             {
-                tw.WriteLine("{0} Size {1} (0x{1:X})", type.Name, Marshal.SizeOf(type));
-                foreach(var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                tw.WriteLine("{0} Size {1} (0x{1:X})", type.Name, GetSize(type));
+                foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
                 {
-                    tw.WriteLine("  {0} {1}\tOffset {2} (0x{2:X})", field.FieldType.Name, field.Name, Marshal.OffsetOf(type, field.Name).ToInt32());
+                    tw.WriteLine("    {0} {1}\toffset {2} (0x{2:X}) size {3} (0x{3:X})", field.FieldType.Name, field.Name, Marshal.OffsetOf(type, field.Name).ToInt32(), GetSize(field.FieldType));
                 }
                 tw.WriteLine();
             }
