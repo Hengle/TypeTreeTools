@@ -49,7 +49,8 @@ namespace TypeTreeTools
                 Debug.LogErrorFormat("Error running command {0} {1}",
                     exe, arguments);
             }
-            File.WriteAllText("Assets/BuildResult.txt", strOutput);
+            if (!Directory.Exists("Logs")) Directory.CreateDirectory("Logs");
+            File.WriteAllText("Logs/BuildResult.txt", strOutput);
         }
         [MenuItem("Tools/Build NativeTypeTreeTools.dll")]
         static void BuildNativeTypeTreeTools()

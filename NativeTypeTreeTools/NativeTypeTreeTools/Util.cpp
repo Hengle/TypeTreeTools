@@ -5,7 +5,8 @@
 FILE* g_Log = NULL;
 void Log(const char* fmt, ...) {
     if (g_Log == NULL) {
-        g_Log = fopen("NativeTypeTreeToolsLog.txt", "w");
+		CreateDirectory(L"Logs", NULL);
+        g_Log = fopen("Logs/NativeTypeTreeToolsLog.txt", "w");
     }
     va_list argp;
     va_start(argp, fmt);

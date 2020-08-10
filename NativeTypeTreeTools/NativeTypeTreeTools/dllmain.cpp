@@ -138,7 +138,8 @@ extern "C" {
                 Log("Error: string.dat length is %lld", length);
             }
             else {
-                FILE* file = fopen("strings.dat", "wb");
+				CreateDirectory(L"Output", NULL);
+                FILE* file = fopen("Output/strings.dat", "wb");
                 fwrite(*CommonString_BufferBegin, sizeof(char), length, file);
                 fclose(file);
             }
@@ -147,11 +148,11 @@ extern "C" {
     }
     EXPORT void ExportClassesJson(const char* moduleName) {
         Log("ExportClassesJson\n");
-        InitBindings(moduleName);
-        //TODO: FIX
+		InitBindings(moduleName);
         if (gRuntimeTypeArray != NULL) {
             Log("%d types", gRuntimeTypeArray->count);
-            FILE* json = fopen("classes.json", "w");
+			CreateDirectory(L"Output", NULL);
+            FILE* json = fopen("Output/classes.json", "w");
             fprintf(json, "{\n");
             for (int i = 0; i < gRuntimeTypeArray->count; i++) {
                 auto type = gRuntimeTypeArray->Types[i];
