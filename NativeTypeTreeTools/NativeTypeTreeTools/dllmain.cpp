@@ -26,9 +26,18 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
+typedef void(__cdecl* GenerateTypeTree_t)(Object* object, TypeTree* typeTree, int options);
+typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, int memLabel, ObjectCreationMode mode);
+typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, int memLabel);
+
+GenerateTypeTree_t GenerateTypeTree;
+Object__Produce_t Object__Produce;
+TypeTree__TypeTree_t TypeTree__TypeTree;
+
 char** CommonString_BufferBegin;
 char** CommonString_BufferEnd;
 RuntimeTypeArray* gRuntimeTypeArray;
+
 void InitBindings(const char* moduleName) {
     PdbSymbolImporter importer;
     if (!importer.LoadFromExe(moduleName)) {
@@ -55,9 +64,33 @@ void InitBindings(const char* moduleName) {
         Log("Error getting address RuntimeTypeArray");
     }
     else {
-        Log("Found address RuntimeTypeArray %llx\n", address);
+        Log("Found address RuntimeTypeArray %p\n", address);
         gRuntimeTypeArray = (RuntimeTypeArray*)address;
     }
+
+	if (!importer.GetAddress("?GenerateTypeTree@@YAXAEBVObject@@AEAVTypeTree@@W4TransferInstructionFlags@@@Z", address)) {
+		Log("Error getting address GenerateTypeTree");
+	}
+	else {
+		Log("Found address GenerateTypeTree %p\n", address);
+		GenerateTypeTree = (GenerateTypeTree_t)address;
+	}
+
+	if (!importer.GetAddress("?Produce@Object@@CAPEAV1@PEBVType@Unity@@0HUMemLabelId@@W4ObjectCreationMode@@@Z", address)) {
+		Log("Error getting address Produce::Object");
+	}
+	else {
+		Log("Found address Produce::Object %p\n", address);
+		Object__Produce = (Object__Produce_t)address;
+	}
+
+	if (!importer.GetAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z", address)) {
+		Log("Error getting address TypeTree::TypeTree");
+	}
+	else {
+		Log("Found address TypeTree::TypeTree %p\n", address);
+		TypeTree__TypeTree = (TypeTree__TypeTree_t)address;
+	}
 
 }
 extern "C" {
@@ -74,6 +107,12 @@ extern "C" {
         LOG_MEMBER(Object__RTTI, unk0);
         LOG_MEMBER(Object__RTTI, unk1);
         Log("\n");
+
+		LOG_TYPE(TypeTree);
+		LOG_MEMBER(TypeTree, m_Nodes);
+		LOG_MEMBER(TypeTree, m_StringData);
+		LOG_MEMBER(TypeTree, m_ByteOffsets);
+		Log("\n");
 
         LOG_TYPE(TypeTreeNode);
         LOG_MEMBER(TypeTreeNode, m_Version);
@@ -156,7 +195,9 @@ extern "C" {
             fprintf(json, "{\n");
             for (int i = 0; i < gRuntimeTypeArray->count; i++) {
                 auto type = gRuntimeTypeArray->Types[i];
-                if (type == NULL) continue;
+				if (type == NULL) {
+					Log("Found NULL pointer for RuntimeType %d\n", i);
+				}
                 fprintf(json, "    \"%d\": \"%s\"", type->classID, type->name);
                 if (i < gRuntimeTypeArray->count - 1) {
                     fprintf(json, ",");
@@ -169,7 +210,53 @@ extern "C" {
         else {
             Log("Error: Could not initialize gRuntimeTypeArray");
         }
-
         CloseLog();
     }
+	EXPORT void ExportStructData(const char* moduleName) {
+
+	}
+	EXPORT void ExportStructDump(const char* moduleName) {
+		//TODO: Fix UnityPlayer TypeTree struct size is 0x60 bytes, while UnityEditor is 0x78 bytes
+		InitBindings(moduleName);
+		if (Object__Produce == NULL ||
+			TypeTree__TypeTree == NULL ||
+			GenerateTypeTree == NULL) {
+			Log("Error initializing functions\n");
+		}
+		if (gRuntimeTypeArray != NULL) {
+			CreateDirectory(L"Output", NULL);
+			FILE* file = fopen("Output/structs.dump", "w");
+			for (int i = 0; i < gRuntimeTypeArray->count; i++) {
+				RTTIClass* type = gRuntimeTypeArray->Types[i];
+				RTTIClass* iter = type;
+				std::string inheritance{};
+				while (true) {
+					inheritance += iter->name;
+					if (iter->base == NULL) break;
+					inheritance += " <- ";
+					iter = iter->base;
+				}
+				fprintf(file, "\n// classID{%d}: %s\n", type->classID, inheritance.c_str());
+				iter = type;
+				while (iter->isAbstract) {
+					fprintf(file, "// %s is abstract\n", iter->name);
+					if (iter->base == NULL) break;
+					iter = iter->base;
+				}
+				if (iter == NULL) {
+					Log("Error finding concrete type for %d\n", i);
+				}
+				Object* value = Object__Produce(iter, iter, 0x32, 0, 0);
+				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
+				TypeTree__TypeTree(typeTree, 0x32);
+				GenerateTypeTree(value, typeTree, 0x2000);
+				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
+				fclose(file);
+			}
+		}
+		else {
+			Log("Error: Could not initialize gRuntimeTypeArray");
+		}
+		CloseLog();
+	}
 }

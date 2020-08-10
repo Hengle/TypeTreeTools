@@ -14,6 +14,10 @@ namespace TypeTreeTools
         delegate void ExportStringData(string modulePath);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void ExportClassesJson(string modulePath);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void ExportStructData(string modulePath);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void ExportStructDump(string modulePath);
         [MenuItem("Tools/Dump/Export String Data")]
         static void DoExportStringData()
         {
@@ -24,12 +28,21 @@ namespace TypeTreeTools
         {
             Invoke<ExportClassesJson>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
         }
+        [MenuItem("Tools/Dump/Export Struct Data")]
+        static void DoExportStructData()
+        {
+            Invoke<ExportStructData>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+        }
+        [MenuItem("Tools/Dump/Export Struct Dump")]
+        static void DoExportStructDump()
+        {
+            Invoke<ExportStructDump>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+        }
         [MenuItem("Tools/Dump/Dump Struct Debug")]
         static void DoTestDump()
         {
             Invoke<DumpStructDebug>();
         }
-
         public static bool Is64BitProcess { get { return IntPtr.Size == 8; } }
 
         static IntPtr LoadTypeTreeLib()

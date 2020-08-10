@@ -81,3 +81,18 @@ struct RuntimeTypeArray2
 	size_t count;
 	RTTIClass** Types;
 };
+struct TypeTree
+{
+	// +0
+	dynamic_array<TypeTreeNode> m_Nodes;
+	// +20
+	dynamic_array<char> m_StringData;
+	// +40
+	dynamic_array<void*> m_ByteOffsets;
+	// +60
+	std::string Dump(char* globalBuf) const;
+	void Write(FILE* file) const;
+};
+class ProxyTransfer;
+class Object;
+typedef int ObjectCreationMode;
