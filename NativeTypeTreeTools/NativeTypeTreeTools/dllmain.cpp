@@ -79,11 +79,14 @@ extern "C" {
         Log("\n");
 
         LOG_TYPE(MemLabelId);
-        LOG_MEMBER(MemLabelId, id);
-        LOG_MEMBER(MemLabelId, RootReferenceIndex);
-        LOG_MEMBER(MemLabelId, Identifier);
+        LOG_MEMBER(MemLabelId, m_RootReferenceWithSalt);
+        LOG_MEMBER(MemLabelId, identifier);
         Log("\n");
 
+        LOG_TYPE(AllocationRootWithSalt);
+        LOG_MEMBER(AllocationRootWithSalt, m_Salt);
+        LOG_MEMBER(AllocationRootWithSalt, m_RootReferenceIndex);
+        Log("\n");
 
         LOG_TYPE(dynamic_array<int>);
         LOG_MEMBER(dynamic_array<int>, data);
@@ -175,9 +178,9 @@ extern "C" {
 			Log("Error initializing functions\n");
 		}
         Log("kMemTypeTree\n");
-        Log("  %d %x\n", kMemTypeTree->id, kMemTypeTree->id);
-        Log("  %d %x\n", kMemTypeTree->RootReferenceIndex, kMemTypeTree->RootReferenceIndex);
-        Log("  %d %x\n", kMemTypeTree->Identifier, kMemTypeTree->Identifier);
+        Log("  %d %x\n", kMemTypeTree->m_RootReferenceWithSalt.m_Salt, kMemTypeTree->m_RootReferenceWithSalt.m_Salt);
+        Log("  %d %x\n", kMemTypeTree->m_RootReferenceWithSalt.m_RootReferenceIndex, kMemTypeTree->m_RootReferenceWithSalt.m_RootReferenceIndex);
+        Log("  %d %x\n", kMemTypeTree->identifier, kMemTypeTree->identifier);
 		if (gRuntimeTypeArray != NULL) {
 			CreateDirectory(L"Output", NULL);
 			FILE* file = fopen("Output/structs.dump", "w");
@@ -205,7 +208,7 @@ extern "C" {
 				Object* value = Object__Produce(iter, iter, 0, &label, ObjectCreationMode::Default);
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
                 MemLabelId memId;
-                memId.Identifier = 0x32;
+                memId.identifier = (MemLabelIdentifier)0x32;
 				TypeTree__TypeTree(typeTree, kMemTypeTree);
 				GenerateTypeTree(value, typeTree, TransferInstructionFlags::SerializeGameRelease);
 				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
