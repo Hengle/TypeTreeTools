@@ -9,21 +9,21 @@ std::string TypeTree::Dump(char* globalBuf) const {
 		auto& node = m_Nodes.data[i];
 		char* type;
 		char* name;
-		if (node.m_Type < 0) {
-			type = globalBuf + (0x7fffffff & node.m_Type);
+		if (node.m_TypeStrOffset < 0) {
+			type = globalBuf + (0x7fffffff & node.m_TypeStrOffset);
 		}
 		else {
-			type = m_StringData.data + node.m_Type;
+			type = m_StringData.data + node.m_TypeStrOffset;
 		}
-		if (node.m_Name < 0) {
-			name = globalBuf + (0x7fffffff & node.m_Name);
+		if (node.m_NameStrOffset < 0) {
+			name = globalBuf + (0x7fffffff & node.m_NameStrOffset);
 		}
 		else {
-			name = m_StringData.data + node.m_Name;
+			name = m_StringData.data + node.m_NameStrOffset;
 		}
 		sprintf_s(debug, "%s %s // ByteSize{%x}, Index{%x}, IsArray{%d}, MetaFlag{%x}",
 			type, name, node.m_ByteSize, node.m_Index, node.m_IsArray, node.m_MetaFlag);
-		for (int j = 0; j < node.m_Depth; j++) {
+		for (int j = 0; j < node.m_Level; j++) {
 			result += "  ";
 		}
 		result += std::string(debug);

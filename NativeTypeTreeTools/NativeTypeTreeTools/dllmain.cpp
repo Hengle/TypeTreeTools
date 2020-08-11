@@ -98,16 +98,6 @@ extern "C" {
 #define LOG_TYPE(type) Log("%s: %d (0x%x)\n", typeid(type).name(), sizeof(type), sizeof(type))
 #define LOG_MEMBER(type, field) Log("    %s: offset %d (0x%x) size %d (0x%x)\n", #field, offsetof(type, field), offsetof(type, field), MEMBER_SIZE(type, field), MEMBER_SIZE(type, field));
     EXPORT void DumpStructDebug() { 
-        LOG_TYPE(Object__RTTI);
-        LOG_MEMBER(Object__RTTI, base);
-        LOG_MEMBER(Object__RTTI, factory);
-        LOG_MEMBER(Object__RTTI, className);
-        LOG_MEMBER(Object__RTTI, size);
-        LOG_MEMBER(Object__RTTI, isAbstract);
-        LOG_MEMBER(Object__RTTI, unk0);
-        LOG_MEMBER(Object__RTTI, unk1);
-        Log("\n");
-
 		LOG_TYPE(TypeTree);
 		LOG_MEMBER(TypeTree, m_Nodes);
 		LOG_MEMBER(TypeTree, m_StringData);
@@ -116,17 +106,18 @@ extern "C" {
 
         LOG_TYPE(TypeTreeNode);
         LOG_MEMBER(TypeTreeNode, m_Version);
-        LOG_MEMBER(TypeTreeNode, m_Depth);
+        LOG_MEMBER(TypeTreeNode, m_Level);
         LOG_MEMBER(TypeTreeNode, m_IsArray);
-        LOG_MEMBER(TypeTreeNode, m_Type);
-        LOG_MEMBER(TypeTreeNode, m_Name);
+        LOG_MEMBER(TypeTreeNode, m_TypeStrOffset);
+        LOG_MEMBER(TypeTreeNode, m_NameStrOffset);
         LOG_MEMBER(TypeTreeNode, m_ByteSize);
         LOG_MEMBER(TypeTreeNode, m_Index);
         LOG_MEMBER(TypeTreeNode, m_MetaFlag);
         Log("\n");
 
         LOG_TYPE(MemLabelId);
-        LOG_MEMBER(MemLabelId, id);
+        LOG_MEMBER(MemLabelId, m_RootReferenceWithSalt);
+		LOG_MEMBER(MemLabelId, identifier);
         Log("\n");
 
 
@@ -142,24 +133,20 @@ extern "C" {
         LOG_MEMBER(RuntimeTypeArray, Types);
         Log("\n");
 
-        LOG_TYPE(RuntimeTypeArray2);
-        LOG_MEMBER(RuntimeTypeArray2, count);
-        LOG_MEMBER(RuntimeTypeArray2, Types);
-        Log("\n");
-
         LOG_TYPE(RTTIClass);
         LOG_MEMBER(RTTIClass, base);
-        LOG_MEMBER(RTTIClass, unk1);
-        LOG_MEMBER(RTTIClass, name);
-        LOG_MEMBER(RTTIClass, unk3);
-        LOG_MEMBER(RTTIClass, unk4);
-        LOG_MEMBER(RTTIClass, classID);
-        LOG_MEMBER(RTTIClass, objectSize);
-        LOG_MEMBER(RTTIClass, typeIndex);
-        LOG_MEMBER(RTTIClass, unk5);
+        LOG_MEMBER(RTTIClass, factory);
+        LOG_MEMBER(RTTIClass, className);
+        LOG_MEMBER(RTTIClass, classNamespace);
+        LOG_MEMBER(RTTIClass, module);
+        LOG_MEMBER(RTTIClass, persistentTypeID);
+        LOG_MEMBER(RTTIClass, size);
+        LOG_MEMBER(RTTIClass, derivedFromInfo);
         LOG_MEMBER(RTTIClass, isAbstract);
-        LOG_MEMBER(RTTIClass, unk6);
-        LOG_MEMBER(RTTIClass, unk7);
+        LOG_MEMBER(RTTIClass, isSealed);
+        LOG_MEMBER(RTTIClass, isEditorOnly);
+        LOG_MEMBER(RTTIClass, attributes);
+		LOG_MEMBER(RTTIClass, attributeCount);
         Log("\n");
 
         CloseLog();
@@ -198,7 +185,7 @@ extern "C" {
 				if (type == NULL) {
 					Log("Found NULL pointer for RuntimeType %d\n", i);
 				}
-                fprintf(json, "    \"%d\": \"%s\"", type->classID, type->name);
+                fprintf(json, "    \"%d\": \"%s\"", type->persistentTypeID, type->className);
                 if (i < gRuntimeTypeArray->count - 1) {
                     fprintf(json, ",");
                 }
@@ -231,15 +218,15 @@ extern "C" {
 				RTTIClass* iter = type;
 				std::string inheritance{};
 				while (true) {
-					inheritance += iter->name;
+					inheritance += iter->className;
 					if (iter->base == NULL) break;
 					inheritance += " <- ";
 					iter = iter->base;
 				}
-				fprintf(file, "\n// classID{%d}: %s\n", type->classID, inheritance.c_str());
+				fprintf(file, "\n// persistentTypeID{%d}: %s\n", type->persistentTypeID, inheritance.c_str());
 				iter = type;
 				while (iter->isAbstract) {
-					fprintf(file, "// %s is abstract\n", iter->name);
+					fprintf(file, "// %s is abstract\n", iter->className);
 					if (iter->base == NULL) break;
 					iter = iter->base;
 				}
