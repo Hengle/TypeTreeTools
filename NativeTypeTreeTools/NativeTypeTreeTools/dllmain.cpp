@@ -27,8 +27,8 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 typedef void(__cdecl* GenerateTypeTree_t)(Object* object, TypeTree* typeTree, int options);
-typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, int memLabel, ObjectCreationMode mode);
-typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, int memLabel);
+typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, MemLabelId* memLabel, ObjectCreationMode mode);
+typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
 
 GenerateTypeTree_t GenerateTypeTree;
 Object__Produce_t Object__Produce;
@@ -37,61 +37,24 @@ TypeTree__TypeTree_t TypeTree__TypeTree;
 char** CommonString_BufferBegin;
 char** CommonString_BufferEnd;
 RuntimeTypeArray* gRuntimeTypeArray;
-
+MemLabelId* kMemTypeTree;
 void InitBindings(const char* moduleName) {
     PdbSymbolImporter importer;
     if (!importer.LoadFromExe(moduleName)) {
         return;
     };
     unsigned long long address;
-    if (!importer.GetAddress("?BufferBegin@CommonString@Unity@@3QEBDEB", address)) {
-        Log("Error getting address CommonString_BufferBegin");
-    }
-    else {
-        Log("Found address CommonString_BufferBegin %p\n", address);
-        CommonString_BufferBegin = (char**)address;
-    }
-
-    if (!importer.GetAddress("?BufferEnd@CommonString@Unity@@3QEBDEB", address)) {
-        Log("Error getting address CommonString_BufferEnd");
-    }
-    else {
-        Log("Found address CommonString_BufferEnd %p\n", address);
-        CommonString_BufferEnd = (char**)address;
-    }
-
-    if (!importer.GetAddress("?ms_runtimeTypes@RTTI@@0URuntimeTypeArray@1@A", address)) {
-        Log("Error getting address RuntimeTypeArray");
-    }
-    else {
-        Log("Found address RuntimeTypeArray %p\n", address);
-        gRuntimeTypeArray = (RuntimeTypeArray*)address;
-    }
-
-	if (!importer.GetAddress("?GenerateTypeTree@@YAXAEBVObject@@AEAVTypeTree@@W4TransferInstructionFlags@@@Z", address)) {
-		Log("Error getting address GenerateTypeTree");
-	}
-	else {
-		Log("Found address GenerateTypeTree %p\n", address);
-		GenerateTypeTree = (GenerateTypeTree_t)address;
-	}
-
-	if (!importer.GetAddress("?Produce@Object@@CAPEAV1@PEBVType@Unity@@0HUMemLabelId@@W4ObjectCreationMode@@@Z", address)) {
-		Log("Error getting address Produce::Object");
-	}
-	else {
-		Log("Found address Produce::Object %p\n", address);
-		Object__Produce = (Object__Produce_t)address;
-	}
-
-	if (!importer.GetAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z", address)) {
-		Log("Error getting address TypeTree::TypeTree");
-	}
-	else {
-		Log("Found address TypeTree::TypeTree %p\n", address);
-		TypeTree__TypeTree = (TypeTree__TypeTree_t)address;
-	}
-
+    importer.AssignAddress("?BufferBegin@CommonString@Unity@@3QEBDEB", (void*&)CommonString_BufferBegin);
+    importer.AssignAddress("?BufferEnd@CommonString@Unity@@3QEBDEB", (void*&)CommonString_BufferEnd);
+    importer.AssignAddress("?ms_runtimeTypes@RTTI@@0URuntimeTypeArray@1@A", (void*&)gRuntimeTypeArray);
+    importer.AssignAddress("?GenerateTypeTree@@YAXAEBVObject@@AEAVTypeTree@@W4TransferInstructionFlags@@@Z", 
+        (void*&)GenerateTypeTree);
+    importer.AssignAddress("?Produce@Object@@CAPEAV1@PEBVType@Unity@@0HUMemLabelId@@W4ObjectCreationMode@@@Z", 
+        (void*&)Object__Produce);
+    importer.AssignAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z",
+        (void*&)TypeTree__TypeTree);
+    importer.AssignAddress("?kMemTypeTree@@3UMemLabelId@@A",
+        (void*&)kMemTypeTree);
 }
 extern "C" {
 #define MEMBER_SIZE(type, field) sizeof(((type *)0)->field)
@@ -116,8 +79,9 @@ extern "C" {
         Log("\n");
 
         LOG_TYPE(MemLabelId);
-        LOG_MEMBER(MemLabelId, m_RootReferenceWithSalt);
-		LOG_MEMBER(MemLabelId, identifier);
+        LOG_MEMBER(MemLabelId, id);
+        LOG_MEMBER(MemLabelId, RootReferenceIndex);
+        LOG_MEMBER(MemLabelId, Identifier);
         Log("\n");
 
 
@@ -210,6 +174,10 @@ extern "C" {
 			GenerateTypeTree == NULL) {
 			Log("Error initializing functions\n");
 		}
+        Log("kMemTypeTree\n");
+        Log("  %d %x\n", kMemTypeTree->id, kMemTypeTree->id);
+        Log("  %d %x\n", kMemTypeTree->RootReferenceIndex, kMemTypeTree->RootReferenceIndex);
+        Log("  %d %x\n", kMemTypeTree->Identifier, kMemTypeTree->Identifier);
 		if (gRuntimeTypeArray != NULL) {
 			CreateDirectory(L"Output", NULL);
 			FILE* file = fopen("Output/structs.dump", "w");
@@ -233,10 +201,13 @@ extern "C" {
 				if (iter == NULL) {
 					Log("Error finding concrete type for %d\n", i);
 				}
-				Object* value = Object__Produce(iter, iter, 0x32, 0, 0);
+                MemLabelId label;
+				Object* value = Object__Produce(iter, iter, 0, &label, ObjectCreationMode::Default);
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
-				TypeTree__TypeTree(typeTree, 0x32);
-				GenerateTypeTree(value, typeTree, 0x2000);
+                MemLabelId memId;
+                memId.Identifier = 0x32;
+				TypeTree__TypeTree(typeTree, kMemTypeTree);
+				GenerateTypeTree(value, typeTree, TransferInstructionFlags::SerializeGameRelease);
 				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
 				fclose(file);
 			}

@@ -88,6 +88,16 @@ bool PdbSymbolImporter::GetAddress(const char* symbolName, unsigned long long& a
 
     return true;
 }
+bool PdbSymbolImporter::AssignAddress(const char* symbolName, void*& target) {
+    unsigned long long address;
+    if (!GetAddress(symbolName, address)) {
+        Log("Could not find address for %s", symbolName);
+        return false;
+    }
+    Log("Found address for %s: %p\n", symbolName, address);
+    target = (void*)address;
+    return true;
+}
 bool PdbSymbolImporter::LoadFromExe(const char* filePath) {
     if (pDiaDataSource != NULL ||
         pDiaSession != NULL ||
