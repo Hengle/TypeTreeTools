@@ -26,7 +26,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-typedef void(__cdecl* GenerateTypeTree_t)(Object* object, TypeTree* typeTree, int options);
+typedef void(__cdecl* GenerateTypeTree_t)(Object* object, TypeTree* typeTree, TransferInstructionFlags options);
 typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, MemLabelId* memLabel, ObjectCreationMode mode);
 typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
 
@@ -194,26 +194,35 @@ extern "C" {
 					inheritance += " <- ";
 					iter = iter->base;
 				}
-				fprintf(file, "\n// persistentTypeID{%d}: %s\n", type->persistentTypeID, inheritance.c_str());
+				fprintf(file, "\n// classID{%d}: %s\n", type->persistentTypeID, inheritance.c_str());
 				iter = type;
 				while (iter->isAbstract) {
 					fprintf(file, "// %s is abstract\n", iter->className);
 					if (iter->base == NULL) break;
 					iter = iter->base;
 				}
-				if (iter == NULL) {
-					Log("Error finding concrete type for %d\n", i);
+				if (iter == NULL || iter->isAbstract) {
+					Log("Could not find concrete type for %d %s\n", i, type->className);
+					continue;
 				}
-                MemLabelId label;
+				MemLabelId label{};
+				//label.m_RootReferenceWithSalt.m_Salt = 0x88;
 				Object* value = Object__Produce(iter, iter, 0, &label, ObjectCreationMode::Default);
+				if (value == 0) {
+					Log("Type %d %s: Produced null object\n", i, type->className);
+					continue;
+				}
+				else {
+					Log("Type %d %s: Generating type\n", i, type->className);
+				}
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
                 MemLabelId memId;
-                memId.identifier = (MemLabelIdentifier)0x32;
+                memId.identifier = (MemLabelIdentifier)0x32; //kMemMonoCodeId
 				TypeTree__TypeTree(typeTree, kMemTypeTree);
 				GenerateTypeTree(value, typeTree, TransferInstructionFlags::SerializeGameRelease);
 				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
-				fclose(file);
 			}
+			fclose(file);
 		}
 		else {
 			Log("Error: Could not initialize gRuntimeTypeArray");
