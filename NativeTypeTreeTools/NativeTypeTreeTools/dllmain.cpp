@@ -10,6 +10,7 @@
 #include "PdbSymbolImporter.h"
 #include "Util.h"
 #include "Structs.h"
+#include "PersistantTypeID.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -29,10 +30,13 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 typedef void(__cdecl* GenerateTypeTree_t)(Object* object, TypeTree* typeTree, TransferInstructionFlags options);
 typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, MemLabelId* memLabel, ObjectCreationMode mode);
 typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
-
+typedef MonoObject*(__cdecl* EditorUtility_CUSTOM_InstanceIDToObject_t)(int instanceID);
+typedef void(__cdecl* Object_CUSTOM_DestroyImmediate_t)(void* pcriptingBackendNativeObjectPtrOpaque, bool allowDestroyingAssets);
 GenerateTypeTree_t GenerateTypeTree;
 Object__Produce_t Object__Produce;
 TypeTree__TypeTree_t TypeTree__TypeTree;
+EditorUtility_CUSTOM_InstanceIDToObject_t EditorUtility_CUSTOM_InstanceIDToObject;
+Object_CUSTOM_DestroyImmediate_t Object_CUSTOM_DestroyImmediate;
 
 char** CommonString_BufferBegin;
 char** CommonString_BufferEnd;
@@ -55,6 +59,10 @@ void InitBindings(const char* moduleName) {
         (void*&)TypeTree__TypeTree);
     importer.AssignAddress("?kMemTypeTree@@3UMemLabelId@@A",
         (void*&)kMemTypeTree);
+    importer.AssignAddress("?EditorUtility_CUSTOM_InstanceIDToObject@@YAPEAUMonoObject@@H@Z",
+        (void*&)EditorUtility_CUSTOM_InstanceIDToObject);
+    importer.AssignAddress("?Object_CUSTOM_DestroyImmediate@@YAXPEAUMonoObject@@E@Z",
+        (void*&)Object_CUSTOM_DestroyImmediate);
 }
 extern "C" {
 #define MEMBER_SIZE(type, field) sizeof(((type *)0)->field)
@@ -116,6 +124,13 @@ extern "C" {
 		LOG_MEMBER(RTTIClass, attributeCount);
         Log("\n");
 
+
+        LOG_TYPE(Object);
+        LOG_MEMBER(Object, virtualFunctionTable);
+        LOG_MEMBER(Object, instanceID);
+        LOG_MEMBER(Object, bits);
+        Log("\n");
+
         CloseLog();
     }
     EXPORT void ExportStringData(const char* moduleName) {
@@ -149,9 +164,9 @@ extern "C" {
             fprintf(json, "{\n");
             for (int i = 0; i < gRuntimeTypeArray->count; i++) {
                 auto type = gRuntimeTypeArray->Types[i];
-				if (type == NULL) {
-					Log("Found NULL pointer for RuntimeType %d\n", i);
-				}
+                if (type == NULL) {
+                    Log("Found NULL pointer for RuntimeType %d\n", i);
+                }
                 fprintf(json, "    \"%d\": \"%s\"", type->persistentTypeID, type->className);
                 if (i < gRuntimeTypeArray->count - 1) {
                     fprintf(json, ",");
@@ -181,7 +196,9 @@ extern "C" {
         Log("  %d %x\n", kMemTypeTree->m_RootReferenceWithSalt.m_Salt, kMemTypeTree->m_RootReferenceWithSalt.m_Salt);
         Log("  %d %x\n", kMemTypeTree->m_RootReferenceWithSalt.m_RootReferenceIndex, kMemTypeTree->m_RootReferenceWithSalt.m_RootReferenceIndex);
         Log("  %d %x\n", kMemTypeTree->identifier, kMemTypeTree->identifier);
+
 		if (gRuntimeTypeArray != NULL) {
+            Log("Dumping %d types\n", gRuntimeTypeArray->count);
 			CreateDirectory(L"Output", NULL);
 			FILE* file = fopen("Output/structs.dump", "w");
 			for (int i = 0; i < gRuntimeTypeArray->count; i++) {
@@ -213,7 +230,7 @@ extern "C" {
 					continue;
 				}
 				else {
-					Log("Type %d %s: Generating type\n", i, type->className);
+					Log("Type %d %s: Generating type. Persistant %d\n", i, type->className, value->IsPersistent());
 				}
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
                 MemLabelId memId;
@@ -221,6 +238,20 @@ extern "C" {
 				TypeTree__TypeTree(typeTree, kMemTypeTree);
 				GenerateTypeTree(value, typeTree, TransferInstructionFlags::SerializeGameRelease);
 				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
+                if (!value->IsPersistent() &&
+                    iter->persistentTypeID != PersistentTypes::SpriteAtlasDatabase &&
+                    iter->persistentTypeID != PersistentTypes::SceneVisibilityState &&
+                    iter->persistentTypeID != PersistentTypes::InspectorExpandedState &&
+                    iter->persistentTypeID != PersistentTypes::AnnotationManager &&
+                    iter->persistentTypeID != PersistentTypes::MonoManager &&
+                    iter->persistentTypeID != PersistentTypes::AssetBundle &&
+                    iter->persistentTypeID != PersistentTypes::NavMeshProjectSettings)
+                {
+                    Log("Getting MonoObject for %d %s - %d.\n", i, iter->className, value->instanceID);
+                    MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(value->instanceID);
+                    Log("Destroying MonoObject. Exists %d\n", managed != NULL);
+                    Object_CUSTOM_DestroyImmediate(managed, false);
+                }
 			}
 			fclose(file);
 		}

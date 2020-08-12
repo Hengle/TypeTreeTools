@@ -73,9 +73,17 @@ struct TypeTree
 	std::string Dump(char* globalBuf) const;
 	void Write(FILE* file) const;
 };
-class ProxyTransfer;
-class Object;
 
+struct Object {
+	void* virtualFunctionTable;
+	int32_t instanceID;
+	uint32_t bits;
+	bool IsPersistent() {
+		return (bits & (1 << 20)) != 0;
+	}
+	
+};
+class MonoObject;
 enum TransferInstructionFlags
 {
 	None = 0,
