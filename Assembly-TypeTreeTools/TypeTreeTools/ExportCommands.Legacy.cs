@@ -209,5 +209,42 @@ namespace TypeTreeTools
                 tw.WriteLine();
             }
         }
+        [MenuItem("Tools/Type Tree/Legacy/Dump Meta")]
+        static unsafe void DebugMeta()
+        {
+            Directory.CreateDirectory(OutputDirectory);
+            var flags = TransferInstructionFlags.SerializeGameRelease;
+            using var tw = new StreamWriter(Path.Combine(OutputDirectory, "dump_meta.txt"));
+
+            for (int i = 0; i < RuntimeTypes.Count; i++)
+            {
+                var type = RuntimeTypes.Types[i];
+                var iter = type;
+                while (iter->IsAbstract)
+                {
+                    if (iter->Base == null)
+                        break;
+                    iter = iter->Base;
+                }
+
+                var obj = NativeObject.GetOrProduce(*type);
+
+                if (obj == null) {
+                    tw.WriteLine("{0} {1} NULL",
+                        i,
+                        iter->ClassName);
+                    continue;
+                }
+
+                tw.WriteLine("{0} {1} InstanceId {2} CachedTypeIndex {3} IsPersistant {4}",
+                    i,
+                    Marshal.PtrToStringAnsi(iter->ClassName),
+                    obj->InstanceID,
+                    obj->CachedTypeIndex,
+                    obj->IsPersistent);
+
+                NativeObject.DestroyIfNotSingletonOrPersistent(obj);
+            }
+        }
     }
 }
