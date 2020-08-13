@@ -81,3 +81,6 @@ crashlytics-build.properties
 /Assets/Plugins/x86_64/msdia140.dll
 /Assets/Plugins/x86_64/msdia140.dll.meta
 *.props
+/Assets/Plugins/x86.meta
+/Assets/Plugins/x86_64/EasyHook64.dll.meta
+/Assets/Plugins/x86_64/EasyLoad64.dll.meta

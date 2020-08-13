@@ -34,8 +34,7 @@ GenerateTypeTree_t GenerateTypeTree;
 typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, MemLabelId memLabel, ObjectCreationMode mode);
 Object__Produce_t Object__Produce;
 
-typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
-TypeTree__TypeTree_t TypeTree__TypeTree;
+
 
 typedef MonoObject*(__cdecl* EditorUtility_CUSTOM_InstanceIDToObject_t)(int instanceID);
 EditorUtility_CUSTOM_InstanceIDToObject_t EditorUtility_CUSTOM_InstanceIDToObject;
@@ -43,6 +42,13 @@ EditorUtility_CUSTOM_InstanceIDToObject_t EditorUtility_CUSTOM_InstanceIDToObjec
 typedef void(__cdecl* Object_CUSTOM_DestroyImmediate_t)(void* pcriptingBackendNativeObjectPtrOpaque, bool allowDestroyingAssets);
 Object_CUSTOM_DestroyImmediate_t Object_CUSTOM_DestroyImmediate;
 
+#if defined(UNITY_2019_1) || defined(UNITY_2019_2)
+typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel, bool unk);
+TypeTree__TypeTree_t TypeTree__TypeTree;
+#else
+typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
+TypeTree__TypeTree_t TypeTree__TypeTree;
+#endif
 #ifdef UNITY_2019_1_OR_NEWER
 typedef bool(__cdecl* GetTypeTree_t)(Object* obj, TransferInstructionFlags flags, TypeTree* tree);
 GetTypeTree_t GetTypeTree;
@@ -78,11 +84,16 @@ void InitBindings(const char* moduleName) {
     importer.AssignAddress("?ms_runtimeTypes@RTTI@@0URuntimeTypeArray@1@A", (void*&)gRuntimeTypeArray);
     importer.AssignAddress("?Produce@Object@@CAPEAV1@PEBVType@Unity@@0HUMemLabelId@@W4ObjectCreationMode@@@Z", 
         (void*&)Object__Produce);
-    importer.AssignAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z",
-        (void*&)TypeTree__TypeTree);
-    importer.AssignAddress("?kMemTypeTree@@3UMemLabelId@@A",
-        (void*&)kMemTypeTree);
+	importer.AssignAddress("?kMemTypeTree@@3UMemLabelId@@A",
+		(void*&)kMemTypeTree);
 
+#if defined(UNITY_2019_1) || defined(UNITY_2019_2)
+	importer.AssignAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@_N@Z",
+		(void*&)TypeTree__TypeTree);
+#else
+	importer.AssignAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z",
+		(void*&)TypeTree__TypeTree);
+#endif
 #ifdef UNITY_2019_1_OR_NEWER
 	importer.AssignAddress("?GetTypeTree@TypeTreeCache@@YA_NPEBVObject@@W4TransferInstructionFlags@@AEAVTypeTree@@@Z",
 		(void*&)GetTypeTree);
@@ -135,7 +146,22 @@ Object* GetOrProduce(RTTIClass * type, int instanceID, ObjectCreationMode creati
 }
 extern "C" {
     EXPORT void DumpStructDebug() { 
-#ifdef UNITY_2019_1_OR_NEWER
+
+#if defined(UNITY_2019_2) || defined(UNITY_2019_1)
+		LOG_TYPE(TypeTree);
+		LOG_MEMBER(TypeTree, Data);
+		LOG_MEMBER(TypeTree, m_PrivateData);
+		Log("\n");
+
+		LOG_TYPE(TypeTreeShareableData);
+		LOG_MEMBER(TypeTreeShareableData, m_Nodes);
+		LOG_MEMBER(TypeTreeShareableData, m_StringData);
+		LOG_MEMBER(TypeTreeShareableData, m_ByteOffsets);
+		LOG_MEMBER(TypeTreeShareableData, FlagsAtGeneration);
+		LOG_MEMBER(TypeTreeShareableData, RefCount);
+		LOG_MEMBER(TypeTreeShareableData, MemLabel);
+		Log("\n");
+#elif defined(UNITY_2019_1_OR_NEWER)
 		LOG_TYPE(TypeTree);
 		LOG_MEMBER(TypeTree, Data);
 		LOG_MEMBER(TypeTree, ReferencedTypes);
@@ -323,7 +349,11 @@ extern "C" {
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
 				MemLabelId memId;
                 memId.identifier = (MemLabelIdentifier)0x32; //kMemMonoCodeId
+#if defined(UNITY_2019_1) || defined(UNITY_2019_2)
+				TypeTree__TypeTree(typeTree, kMemTypeTree, false);
+#else
 				TypeTree__TypeTree(typeTree, kMemTypeTree);
+#endif
 				Log("Type %d %s: Calling GetTypeTree.\n", i, type->className);
 #ifdef UNITY_2019_1_OR_NEWER
 				if (!GetTypeTree(obj, TransferInstructionFlags::SerializeGameRelease, typeTree)) {

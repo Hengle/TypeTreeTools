@@ -118,7 +118,10 @@ struct TypeTreeShareableData {
 #endif
 struct TypeTree
 {
-#ifdef UNITY_2019_1_OR_NEWER
+#if defined(UNITY_2019_2) || defined(UNITY_2019_1)
+	TypeTreeShareableData* Data;
+	TypeTreeShareableData m_PrivateData;
+#elif defined(UNITY_2019_1_OR_NEWER)
 	TypeTreeShareableData* Data;
 	void* ReferencedTypes;
 	bool PoolOwned;
