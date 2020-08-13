@@ -94,7 +94,13 @@ bool PdbSymbolImporter::AssignAddress(const char* symbolName, void*& target) {
         Log("Could not find address for %s", symbolName);
         return false;
     }
-    Log("Found address for %s: %p\n", symbolName, address);
+	DWORD rva;
+	GetRVA(symbolName, rva);
+	if (rva == 0xCCCCCCCC) {
+		Log("Cound not find address for %s: %p RVA %X\n", symbolName, address, rva);
+		return false;
+	}
+    Log("Found address for %s: %p RVA %X\n", symbolName, address, rva);
     target = (void*)address;
     return true;
 }

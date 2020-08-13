@@ -17,6 +17,8 @@
 [Oo]bj/
 /Output/
 /Logs/
+/Packages/
+/UserSettings/
 
 # Asset meta data should only be ignored when the corresponding asset is also ignored
 !/[Aa]ssets/**/*.meta
@@ -69,3 +71,13 @@ crashlytics-build.properties
 # PdbService
 /PdbService/bin
 /PdbService/obj
+/NativeTypeTreeTools/NativeTypeTreeTools/Defines.h
+/Assets/Plugins/Managed/Dia2Lib.dll
+/Assets/Plugins/Managed/Dia2Lib.dll.meta
+/Assets/Plugins/Managed/TypeTreeTools.dll
+/Assets/Plugins/Managed/TypeTreeTools.dll.meta
+/Assets/Plugins/x86/msdia140.dll
+/Assets/Plugins/x86/msdia140.dll.meta
+/Assets/Plugins/x86_64/msdia140.dll
+/Assets/Plugins/x86_64/msdia140.dll.meta
+*.props

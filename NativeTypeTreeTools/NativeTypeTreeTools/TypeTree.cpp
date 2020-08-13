@@ -1,25 +1,49 @@
 #include "Structs.h"
 
+dynamic_array<TypeTreeNode>& TypeTree::GetNodes() const {
+#ifdef UNITY_2019_1_OR_NEWER
+	return Data->m_Nodes;
+#else
+	return m_Nodes;
+#endif
+}
+dynamic_array<char>& TypeTree::GetStringData() const {
+#ifdef UNITY_2019_1_OR_NEWER
+	return Data->m_StringData;
+#else
+	return m_StringData;
+#endif
+}
+dynamic_array<void*>& TypeTree::GetByteOffsets() const {
+#ifdef UNITY_2019_1_OR_NEWER
+	return Data->m_ByteOffsets;
+#else
+	return m_ByteOffsets;
+#endif
+}
+ void TypeTree::Log() {
 
+
+}
 std::string TypeTree::Dump(char* globalBuf) const {
 	std::string result{};
 	char debug[512];
 	memset(debug, 0, 512);
-	for (int i = 0; i < m_Nodes.size; i++) {
-		auto& node = m_Nodes.data[i];
+	for (int i = 0; i < GetNodes().size; i++) {
+		auto& node = GetNodes().data[i];
 		char* type;
 		char* name;
 		if (node.m_TypeStrOffset < 0) {
 			type = globalBuf + (0x7fffffff & node.m_TypeStrOffset);
 		}
 		else {
-			type = m_StringData.data + node.m_TypeStrOffset;
+			type = GetStringData().data + node.m_TypeStrOffset;
 		}
 		if (node.m_NameStrOffset < 0) {
 			name = globalBuf + (0x7fffffff & node.m_NameStrOffset);
 		}
 		else {
-			name = m_StringData.data + node.m_NameStrOffset;
+			name = GetStringData().data + node.m_NameStrOffset;
 		}
 		sprintf_s(debug, "%s %s // ByteSize{%x}, Index{%x}, IsArray{%d}, MetaFlag{%x}",
 			type, name, node.m_ByteSize, node.m_Index, node.m_IsArray, node.m_MetaFlag);
@@ -33,8 +57,8 @@ std::string TypeTree::Dump(char* globalBuf) const {
 }
 void TypeTree::Write(FILE* file) const
 {
-	fwrite(&m_Nodes.size, 4, 1, file);
-	fwrite(&m_StringData.size, 4, 1, file);
-	fwrite(m_Nodes.data, m_Nodes.size * sizeof(TypeTreeNode), 1, file);
-	fwrite(m_StringData.data, m_StringData.size, 1, file);
+	fwrite(&GetNodes().size, 4, 1, file);
+	fwrite(&GetStringData().size, 4, 1, file);
+	fwrite(GetNodes().data, GetNodes().size * sizeof(TypeTreeNode), 1, file);
+	fwrite(GetStringData().data, GetStringData().size, 1, file);
 }

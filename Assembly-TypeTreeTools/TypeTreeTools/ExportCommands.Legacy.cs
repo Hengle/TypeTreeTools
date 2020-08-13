@@ -159,13 +159,35 @@ namespace TypeTreeTools
                 }
 
                 var obj = NativeObject.GetOrProduce(*type);
-
+                if(obj == null)
+                {
+                    Log.WriteLine("Type {0} {1}: Produced null object", i, Marshal.PtrToStringAnsi(type->ClassName));
+                }
+                else
+                {
+                    Log.WriteLine("Type {0} {1}: Generating type. PersistentId {2}, Persistent {3}", 
+                        i,
+                        Marshal.PtrToStringAnsi(type->ClassName), (int)type->PersistentTypeID, obj->IsPersistent);
+                }
                 if (obj == null)
                     continue;
 
                 if (obj->GetTypeTree(flags, out var tree))
                     TypeTreeUtility.CreateTextDump(tree, tw);
 
+                if (!obj->IsPersistent &&
+                    type->PersistentTypeID != PersistentTypeID.SpriteAtlasDatabase &&
+                    type->PersistentTypeID != PersistentTypeID.SceneVisibilityState &&
+                    type->PersistentTypeID != PersistentTypeID.InspectorExpandedState &&
+                    type->PersistentTypeID != PersistentTypeID.AnnotationManager &&
+                    type->PersistentTypeID != PersistentTypeID.MonoManager)
+                {
+                    Log.WriteLine("Type {0} {1}: Destroying object. InstanceID {2}. CachedType {3}",
+                        i,
+                        Marshal.PtrToStringAnsi(type->ClassName),
+                        obj->InstanceID,
+                        obj->CachedTypeIndex);
+                }
                 NativeObject.DestroyIfNotSingletonOrPersistent(obj);
             }
         }

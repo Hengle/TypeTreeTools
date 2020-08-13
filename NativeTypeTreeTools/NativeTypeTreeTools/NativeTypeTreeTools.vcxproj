@@ -167,15 +167,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Defines.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="dllmain.h" />
     <ClInclude Include="PdbSymbolImporter.h" />
-    <ClInclude Include="PersistantTypeID.h" />
+    <ClInclude Include="PersistentTypeID.h" />
     <ClInclude Include="Structs.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="PdbSymbolImporter.cpp" />
     <ClCompile Include="TypeTree.cpp" />
     <ClCompile Include="Util.cpp" />

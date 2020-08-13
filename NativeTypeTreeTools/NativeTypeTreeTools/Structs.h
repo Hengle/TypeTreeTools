@@ -1,5 +1,48 @@
 #pragma once
+#include "Defines.h"
+#include "PersistentTypeID.h"
 #include <string>
+enum class TransferInstructionFlags
+{
+	None = 0,
+	ReadWriteFromSerializedFile = 1 << 0,
+	AssetMetaDataOnly = 1 << 1,
+	HandleDrivenProperties = 1 << 2,
+	LoadAndUnloadAssetsDuringBuild = 1 << 3,
+	SerializeDebugProperties = 1 << 4,
+	IgnoreDebugPropertiesForIndex = 1 << 5,
+	BuildPlayerOnlySerializeBuildProperties = 1 << 6,
+	IsCloningObject = 1 << 7,
+	SerializeGameRelease = 1 << 8,
+	SwapEndianess = 1 << 9,
+	ResolveStreamedResourceSources = 1 << 10,
+	DontReadObjectsFromDiskBeforeWriting = 1 << 11,
+	SerializeMonoReload = 1 << 12,
+	DontRequireAllMetaFlags = 1 << 13,
+	SerializeForPrefabSystem = 1 << 14,
+	WarnAboutLeakedObjects = 1 << 15,
+	LoadPrefabAsScene = 1 << 16,
+	SerializeCopyPasteTransfer = 1 << 17,
+	EditorPlayMode = 1 << 18,
+	BuildResourceImage = 1 << 19,
+	SerializeEditorMinimalScene = 1 << 21,
+	GenerateBakedPhysixMeshes = 1 << 22,
+	ThreadedSerialization = 1 << 23,
+	IsBuiltinResourcesFile = 1 << 24,
+	PerformUnloadDependencyTracking = 1 << 25,
+	DisableWriteTypeTree = 1 << 26,
+	AutoreplaceEditorWindow = 1 << 27,
+	DontCreateMonoBehaviourScriptWrapper = 1 << 28,
+	SerializeForInspector = 1 << 29,
+	SerializedAssetBundleVersion = 1 << 30,
+	AllowTextSerialization = 1 << 31,
+};
+enum class ObjectCreationMode
+{
+	Default = 0,
+	FromNonMainThread = 1,
+	DefaultNoLock = 2,
+};
 struct TypeTreeNode
 {
 	int16_t m_Version;
@@ -10,6 +53,9 @@ struct TypeTreeNode
 	int32_t m_ByteSize;
 	int32_t m_Index;
 	int32_t m_MetaFlag;
+#ifdef UNITY_2019_1_OR_NEWER
+	uint64_t m_RefTypeHash;
+#endif
 };
 struct AllocationRootWithSalt {
 	uint32_t m_Salt;
@@ -45,7 +91,7 @@ struct RTTIClass {
 	const char* className;
 	const char* classNamespace;
 	const char* module;
-	int32_t persistentTypeID;
+	PersistentTypeID persistentTypeID;
 	int32_t size;
 	DerivedFromInfo derivedFromInfo;
 	bool isAbstract;
@@ -60,18 +106,33 @@ struct RuntimeTypeArray
 	size_t count;
 	RTTIClass* Types[1];
 };
-
+#ifdef UNITY_2019_1_OR_NEWER
+struct TypeTreeShareableData {
+	dynamic_array<TypeTreeNode> m_Nodes;
+	dynamic_array<char> m_StringData;
+	dynamic_array<void*> m_ByteOffsets;
+	TransferInstructionFlags FlagsAtGeneration;
+	int RefCount;
+	MemLabelId* MemLabel;
+};
+#endif
 struct TypeTree
 {
-	// +0
+#ifdef UNITY_2019_1_OR_NEWER
+	TypeTreeShareableData* Data;
+	void* ReferencedTypes;
+	bool PoolOwned;
+#else
 	dynamic_array<TypeTreeNode> m_Nodes;
-	// +20
 	dynamic_array<char> m_StringData;
-	// +40
 	dynamic_array<void*> m_ByteOffsets;
-	// +60
+#endif
 	std::string Dump(char* globalBuf) const;
 	void Write(FILE* file) const;
+	dynamic_array<TypeTreeNode> &GetNodes() const;
+	dynamic_array<char>& GetStringData() const;
+	dynamic_array<void*>& GetByteOffsets() const;
+	static void Log();
 };
 
 struct Object {
@@ -84,44 +145,4 @@ struct Object {
 	
 };
 class MonoObject;
-enum TransferInstructionFlags
-{
-	None = 0,
-	ReadWriteFromSerializedFile = 1 << 0,
-	AssetMetaDataOnly = 1 << 1,
-	HandleDrivenProperties = 1 << 2,
-	LoadAndUnloadAssetsDuringBuild = 1 << 3,
-	SerializeDebugProperties = 1 << 4,
-	IgnoreDebugPropertiesForIndex = 1 << 5,
-	BuildPlayerOnlySerializeBuildProperties = 1 << 6,
-	IsCloningObject = 1 << 7,
-	SerializeGameRelease = 1 << 8,
-	SwapEndianess = 1 << 9,
-	ResolveStreamedResourceSources = 1 << 10,
-	DontReadObjectsFromDiskBeforeWriting = 1 << 11,
-	SerializeMonoReload = 1 << 12,
-	DontRequireAllMetaFlags = 1 << 13,
-	SerializeForPrefabSystem = 1 << 14,
-	WarnAboutLeakedObjects = 1 << 15,
-	LoadPrefabAsScene = 1 << 16,
-	SerializeCopyPasteTransfer = 1 << 17,
-	EditorPlayMode = 1 << 18,
-	BuildResourceImage = 1 << 19,
-	SerializeEditorMinimalScene = 1 << 21,
-	GenerateBakedPhysixMeshes = 1 << 22,
-	ThreadedSerialization = 1 << 23,
-	IsBuiltinResourcesFile = 1 << 24,
-	PerformUnloadDependencyTracking = 1 << 25,
-	DisableWriteTypeTree = 1 << 26,
-	AutoreplaceEditorWindow = 1 << 27,
-	DontCreateMonoBehaviourScriptWrapper = 1 << 28,
-	SerializeForInspector = 1 << 29,
-	SerializedAssetBundleVersion = 1 << 30,
-	AllowTextSerialization = 1 << 31,
-};
-enum ObjectCreationMode
-{
-	Default = 0,
-	FromNonMainThread = 1,
-	DefaultNoLock = 2,
-};
+class NativeObject;

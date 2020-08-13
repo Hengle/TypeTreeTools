@@ -1,5 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "framework.h"
+#include "Defines.h"
 #include "dllmain.h"
 #include "dia2.h"
 #include <stdio.h>
@@ -10,7 +11,7 @@
 #include "PdbSymbolImporter.h"
 #include "Util.h"
 #include "Structs.h"
-#include "PersistantTypeID.h"
+#include "PersistentTypeID.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -28,15 +29,39 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     return TRUE;
 }
 typedef void(__cdecl* GenerateTypeTree_t)(Object* object, TypeTree* typeTree, TransferInstructionFlags options);
-typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, MemLabelId* memLabel, ObjectCreationMode mode);
-typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
-typedef MonoObject*(__cdecl* EditorUtility_CUSTOM_InstanceIDToObject_t)(int instanceID);
-typedef void(__cdecl* Object_CUSTOM_DestroyImmediate_t)(void* pcriptingBackendNativeObjectPtrOpaque, bool allowDestroyingAssets);
 GenerateTypeTree_t GenerateTypeTree;
+
+typedef Object* (__cdecl* Object__Produce_t)(struct RTTIClass* classInfo, struct RTTIClass* classInfo2, int instanceID, MemLabelId memLabel, ObjectCreationMode mode);
 Object__Produce_t Object__Produce;
+
+typedef void(__thiscall* TypeTree__TypeTree_t)(TypeTree* self, MemLabelId* memLabel);
 TypeTree__TypeTree_t TypeTree__TypeTree;
+
+typedef MonoObject*(__cdecl* EditorUtility_CUSTOM_InstanceIDToObject_t)(int instanceID);
 EditorUtility_CUSTOM_InstanceIDToObject_t EditorUtility_CUSTOM_InstanceIDToObject;
+
+typedef void(__cdecl* Object_CUSTOM_DestroyImmediate_t)(void* pcriptingBackendNativeObjectPtrOpaque, bool allowDestroyingAssets);
 Object_CUSTOM_DestroyImmediate_t Object_CUSTOM_DestroyImmediate;
+
+#ifdef UNITY_2019_1_OR_NEWER
+typedef bool(__cdecl* GetTypeTree_t)(Object* obj, TransferInstructionFlags flags, TypeTree* tree);
+GetTypeTree_t GetTypeTree;
+
+typedef Object*(__cdecl* GetSpriteAtlasDatabase_t)(void);
+GetSpriteAtlasDatabase_t GetSpriteAtlasDatabase;
+
+typedef Object* (__cdecl* GetSceneVisibilityState_t)(void);
+GetSceneVisibilityState_t GetSceneVisibilityState;
+
+typedef Object* (__cdecl* GetInspectorExpandedState_t)(void);
+GetInspectorExpandedState_t GetInspectorExpandedState;
+
+typedef Object* (__cdecl* GetAnnotationManager_t)(void);
+GetAnnotationManager_t GetAnnotationManager;
+
+typedef Object* (__cdecl* GetMonoManager_t)(void);
+GetMonoManager_t GetMonoManager;
+#endif
 
 char** CommonString_BufferBegin;
 char** CommonString_BufferEnd;
@@ -51,29 +76,87 @@ void InitBindings(const char* moduleName) {
     importer.AssignAddress("?BufferBegin@CommonString@Unity@@3QEBDEB", (void*&)CommonString_BufferBegin);
     importer.AssignAddress("?BufferEnd@CommonString@Unity@@3QEBDEB", (void*&)CommonString_BufferEnd);
     importer.AssignAddress("?ms_runtimeTypes@RTTI@@0URuntimeTypeArray@1@A", (void*&)gRuntimeTypeArray);
-    importer.AssignAddress("?GenerateTypeTree@@YAXAEBVObject@@AEAVTypeTree@@W4TransferInstructionFlags@@@Z", 
-        (void*&)GenerateTypeTree);
     importer.AssignAddress("?Produce@Object@@CAPEAV1@PEBVType@Unity@@0HUMemLabelId@@W4ObjectCreationMode@@@Z", 
         (void*&)Object__Produce);
     importer.AssignAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z",
         (void*&)TypeTree__TypeTree);
     importer.AssignAddress("?kMemTypeTree@@3UMemLabelId@@A",
         (void*&)kMemTypeTree);
-    importer.AssignAddress("?EditorUtility_CUSTOM_InstanceIDToObject@@YAPEAUMonoObject@@H@Z",
-        (void*&)EditorUtility_CUSTOM_InstanceIDToObject);
-    importer.AssignAddress("?Object_CUSTOM_DestroyImmediate@@YAXPEAUMonoObject@@E@Z",
-        (void*&)Object_CUSTOM_DestroyImmediate);
+
+#ifdef UNITY_2019_1_OR_NEWER
+	importer.AssignAddress("?GetTypeTree@TypeTreeCache@@YA_NPEBVObject@@W4TransferInstructionFlags@@AEAVTypeTree@@@Z",
+		(void*&)GetTypeTree);
+	importer.AssignAddress("?GetSpriteAtlasDatabase@@YAAEAVSpriteAtlasDatabase@@XZ",
+		(void*&)GetSpriteAtlasDatabase);
+	importer.AssignAddress("?GetSceneVisibilityState@@YAAEAVSceneVisibilityState@@XZ",
+		(void*&)GetSceneVisibilityState);
+	importer.AssignAddress("?GetInspectorExpandedState@@YAAEAVInspectorExpandedState@@XZ",
+		(void*&)GetInspectorExpandedState);
+	importer.AssignAddress("?GetAnnotationManager@@YAAEAVAnnotationManager@@XZ",
+		(void*&)GetAnnotationManager);
+	importer.AssignAddress("?GetMonoManager@@YAAEAVMonoManager@@XZ",
+		(void*&)GetMonoManager);
+	importer.AssignAddress("?EditorUtility_CUSTOM_InstanceIDToObject@@YAPEAVScriptingBackendNativeObjectPtrOpaque@@H@Z",
+		(void*&)EditorUtility_CUSTOM_InstanceIDToObject);
+	importer.AssignAddress("?Object_CUSTOM_DestroyImmediate@@YAXPEAVScriptingBackendNativeObjectPtrOpaque@@E@Z",
+		(void*&)Object_CUSTOM_DestroyImmediate);
+#else
+	importer.AssignAddress("?GenerateTypeTree@@YAXAEBVObject@@AEAVTypeTree@@W4TransferInstructionFlags@@@Z",
+		(void*&)GenerateTypeTree);
+	importer.AssignAddress("?EditorUtility_CUSTOM_InstanceIDToObject@@YAPEAUMonoObject@@H@Z",
+		(void*&)EditorUtility_CUSTOM_InstanceIDToObject);
+	importer.AssignAddress("?Object_CUSTOM_DestroyImmediate@@YAXPEAUMonoObject@@E@Z",
+		(void*&)Object_CUSTOM_DestroyImmediate);
+#endif
+}
+Object* GetOrProduce(RTTIClass * type, int instanceID, ObjectCreationMode creationMode) {
+#ifdef UNITY_2019_1_OR_NEWER
+	switch(type->persistentTypeID)
+	{
+		case PersistentTypeID::SpriteAtlasDatabase:
+		return GetSpriteAtlasDatabase();
+		case PersistentTypeID::SceneVisibilityState:
+			return GetSceneVisibilityState();
+		case PersistentTypeID::InspectorExpandedState:
+			return GetInspectorExpandedState();
+		case PersistentTypeID::AnnotationManager:
+			return GetAnnotationManager();
+		case PersistentTypeID::MonoManager:
+			return GetMonoManager();
+	}
+	if (type->isAbstract) return NULL;
+	MemLabelId memLabel{};
+	return Object__Produce(type, type, 0, memLabel, ObjectCreationMode::Default);
+#else
+	if (type->isAbstract) return NULL;
+	MemLabelId memLabel{};
+	return Object__Produce(type, type, 0, &memLabel, ObjectCreationMode::Default);
+#endif
 }
 extern "C" {
-#define MEMBER_SIZE(type, field) sizeof(((type *)0)->field)
-#define LOG_TYPE(type) Log("%s: %d (0x%x)\n", typeid(type).name(), sizeof(type), sizeof(type))
-#define LOG_MEMBER(type, field) Log("    %s: offset %d (0x%x) size %d (0x%x)\n", #field, offsetof(type, field), offsetof(type, field), MEMBER_SIZE(type, field), MEMBER_SIZE(type, field));
     EXPORT void DumpStructDebug() { 
+#ifdef UNITY_2019_1_OR_NEWER
+		LOG_TYPE(TypeTree);
+		LOG_MEMBER(TypeTree, Data);
+		LOG_MEMBER(TypeTree, ReferencedTypes);
+		LOG_MEMBER(TypeTree, PoolOwned);
+		Log("\n");
+
+		LOG_TYPE(TypeTreeShareableData);
+		LOG_MEMBER(TypeTreeShareableData, m_Nodes);
+		LOG_MEMBER(TypeTreeShareableData, m_StringData);
+		LOG_MEMBER(TypeTreeShareableData, m_ByteOffsets);
+		LOG_MEMBER(TypeTreeShareableData, FlagsAtGeneration);
+		LOG_MEMBER(TypeTreeShareableData, RefCount);
+		LOG_MEMBER(TypeTreeShareableData, MemLabel);
+		Log("\n");
+#else
 		LOG_TYPE(TypeTree);
 		LOG_MEMBER(TypeTree, m_Nodes);
 		LOG_MEMBER(TypeTree, m_StringData);
 		LOG_MEMBER(TypeTree, m_ByteOffsets);
 		Log("\n");
+#endif
 
         LOG_TYPE(TypeTreeNode);
         LOG_MEMBER(TypeTreeNode, m_Version);
@@ -84,6 +167,9 @@ extern "C" {
         LOG_MEMBER(TypeTreeNode, m_ByteSize);
         LOG_MEMBER(TypeTreeNode, m_Index);
         LOG_MEMBER(TypeTreeNode, m_MetaFlag);
+#ifdef UNITY_2019_1_OR_NEWER
+		LOG_MEMBER(TypeTreeNode, m_RefTypeHash);
+#endif
         Log("\n");
 
         LOG_TYPE(MemLabelId);
@@ -185,12 +271,15 @@ extern "C" {
 
 	}
 	EXPORT void ExportStructDump(const char* moduleName) {
-		//TODO: Fix UnityPlayer TypeTree struct size is 0x60 bytes, while UnityEditor is 0x78 bytes
 		InitBindings(moduleName);
 		if (Object__Produce == NULL ||
 			TypeTree__TypeTree == NULL ||
-			GenerateTypeTree == NULL) {
+			(GenerateTypeTree == NULL && GetTypeTree == NULL) ||
+			EditorUtility_CUSTOM_InstanceIDToObject == NULL ||
+			Object_CUSTOM_DestroyImmediate == NULL) {
 			Log("Error initializing functions\n");
+			CloseLog();
+			return;
 		}
         Log("kMemTypeTree\n");
         Log("  %d %x\n", kMemTypeTree->m_RootReferenceWithSalt.m_Salt, kMemTypeTree->m_RootReferenceWithSalt.m_Salt);
@@ -223,32 +312,37 @@ extern "C" {
 					continue;
 				}
 				MemLabelId label{};
-				//label.m_RootReferenceWithSalt.m_Salt = 0x88;
-				Object* value = Object__Produce(iter, iter, 0, &label, ObjectCreationMode::Default);
-				if (value == 0) {
-					Log("Type %d %s: Produced null object\n", i, type->className);
+				Object* obj = GetOrProduce(type, 0, ObjectCreationMode::Default);
+				if (obj == NULL) {
+					Log("Type %d %s: Produced null object\n", i, iter->className);
 					continue;
 				}
 				else {
-					Log("Type %d %s: Generating type. Persistant %d\n", i, type->className, value->IsPersistent());
+					Log("Type %d %s: Generating type. PersistentId %d, Persistent %d\n", i, type->className, type->persistentTypeID, obj->IsPersistent());
 				}
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
-                MemLabelId memId;
+				MemLabelId memId;
                 memId.identifier = (MemLabelIdentifier)0x32; //kMemMonoCodeId
 				TypeTree__TypeTree(typeTree, kMemTypeTree);
+				Log("Type %d %s: Calling GetTypeTree.\n", i, type->className);
+#ifdef UNITY_2019_1_OR_NEWER
+				if (!GetTypeTree(obj, TransferInstructionFlags::SerializeGameRelease, typeTree)) {
+					Log("Error calling GetTypeTree");
+				}
+#else
 				GenerateTypeTree(value, typeTree, TransferInstructionFlags::SerializeGameRelease);
+#endif
 				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
-                if (!value->IsPersistent() &&
-                    iter->persistentTypeID != PersistentTypes::SpriteAtlasDatabase &&
-                    iter->persistentTypeID != PersistentTypes::SceneVisibilityState &&
-                    iter->persistentTypeID != PersistentTypes::InspectorExpandedState &&
-                    iter->persistentTypeID != PersistentTypes::AnnotationManager &&
-                    iter->persistentTypeID != PersistentTypes::MonoManager &&
-                    iter->persistentTypeID != PersistentTypes::AssetBundle &&
-                    iter->persistentTypeID != PersistentTypes::NavMeshProjectSettings)
+                if (!obj->IsPersistent() &&
+					type->persistentTypeID != PersistentTypeID::SpriteAtlasDatabase &&
+					type->persistentTypeID != PersistentTypeID::SceneVisibilityState &&
+					type->persistentTypeID != PersistentTypeID::InspectorExpandedState &&
+					type->persistentTypeID != PersistentTypeID::AnnotationManager &&
+					type->persistentTypeID != PersistentTypeID::MonoManager &&
+					type->persistentTypeID != PersistentTypeID::AssetBundle)
                 {
-                    Log("Getting MonoObject for %d %s - %d.\n", i, iter->className, value->instanceID);
-                    MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(value->instanceID);
+                    Log("Getting MonoObject for %d %s - instanceID %d.\n", i, type->className, obj->instanceID);
+                    MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(obj->instanceID);
                     Log("Destroying MonoObject. Exists %d\n", managed != NULL);
                     Object_CUSTOM_DestroyImmediate(managed, false);
                 }
