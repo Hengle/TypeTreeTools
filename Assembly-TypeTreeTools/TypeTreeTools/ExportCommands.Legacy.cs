@@ -94,7 +94,9 @@ namespace TypeTreeTools
                 Debug.LogFormat("Type {0} Produced object {1}", i, obj->InstanceID);
 
                 Debug.LogFormat("Type {0} Getting Type Tree", i);
-                if (obj->GetTypeTree(flags, out var tree))
+                var tree = new TypeTree();
+                tree.Init();
+                if (obj->GetTypeTree(flags, ref tree))
                 {
                     Debug.LogFormat("Type {0} Getting PersistentTypeID", i);
                     // Shouldn't this write type.PersistentTypeID instead?
@@ -171,8 +173,9 @@ namespace TypeTreeTools
                 }
                 if (obj == null)
                     continue;
-
-                if (obj->GetTypeTree(flags, out var tree))
+                var tree = new TypeTree();
+                tree.Init();
+                if (obj->GetTypeTree(flags, ref tree))
                     TypeTreeUtility.CreateTextDump(tree, tw);
 
                 if (!obj->IsPersistent &&
