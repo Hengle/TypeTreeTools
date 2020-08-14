@@ -141,7 +141,7 @@ Object* GetOrProduce(RTTIClass * type, int instanceID, ObjectCreationMode creati
 #else
 	if (type->isAbstract) return NULL;
 	MemLabelId memLabel{};
-	return Object__Produce(type, type, 0, &memLabel, ObjectCreationMode::Default);
+	return Object__Produce(type, type, 0, memLabel, ObjectCreationMode::Default);
 #endif
 }
 extern "C" {
@@ -300,7 +300,6 @@ extern "C" {
 		InitBindings(moduleName);
 		if (Object__Produce == NULL ||
 			TypeTree__TypeTree == NULL ||
-			(GenerateTypeTree == NULL && GetTypeTree == NULL) ||
 			EditorUtility_CUSTOM_InstanceIDToObject == NULL ||
 			Object_CUSTOM_DestroyImmediate == NULL) {
 			Log("Error initializing functions\n");
@@ -360,7 +359,7 @@ extern "C" {
 					Log("Error calling GetTypeTree");
 				}
 #else
-				GenerateTypeTree(value, typeTree, TransferInstructionFlags::SerializeGameRelease);
+				GenerateTypeTree(obj, typeTree, TransferInstructionFlags::SerializeGameRelease);
 #endif
 				fputs(typeTree->Dump(*CommonString_BufferBegin).c_str(), file);
                 if (!obj->IsPersistent() &&

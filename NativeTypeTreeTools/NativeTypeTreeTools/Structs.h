@@ -130,11 +130,11 @@ struct TypeTree
 	dynamic_array<char> m_StringData;
 	dynamic_array<void*> m_ByteOffsets;
 #endif
-	std::string Dump(char* globalBuf) const;
-	void Write(FILE* file) const;
-	dynamic_array<TypeTreeNode> &GetNodes() const;
-	dynamic_array<char>& GetStringData() const;
-	dynamic_array<void*>& GetByteOffsets() const;
+	std::string Dump(char* globalBuf);
+	void Write(FILE* file);
+	dynamic_array<TypeTreeNode> &GetNodes();
+	dynamic_array<char>& GetStringData();
+	dynamic_array<void*>& GetByteOffsets();
 	static void Log();
 };
 

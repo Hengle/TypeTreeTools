@@ -176,7 +176,15 @@ namespace TypeTreeTools
                 var tree = new TypeTree();
                 tree.Init();
                 if (obj->GetTypeTree(flags, ref tree))
+                {
                     TypeTreeUtility.CreateTextDump(tree, tw);
+                }
+                else
+                {
+                    Log.WriteLine("Type {0} {1}: Error generating type tree",
+                        i,
+                        Marshal.PtrToStringAnsi(type->ClassName));
+                }
 
                 if (!obj->IsPersistent &&
                     type->PersistentTypeID != PersistentTypeID.SpriteAtlasDatabase &&

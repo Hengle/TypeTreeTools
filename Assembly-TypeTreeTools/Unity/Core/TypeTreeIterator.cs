@@ -14,7 +14,11 @@ namespace Unity.Core
         public TypeTreeIterator(TypeTree* tree)
         {
             LinkedTypeTree = tree;
+#if UNITY_2019_1_OR_NEWER
             TypeTreeData   = tree->Data;
+#else
+            TypeTreeData = null;
+#endif
             NodeIndex      = 0;
         }
 

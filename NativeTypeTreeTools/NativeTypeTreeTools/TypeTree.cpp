@@ -1,20 +1,20 @@
 #include "Structs.h"
 
-dynamic_array<TypeTreeNode>& TypeTree::GetNodes() const {
+dynamic_array<TypeTreeNode>& TypeTree::GetNodes() {
 #ifdef UNITY_2019_1_OR_NEWER
 	return Data->m_Nodes;
 #else
 	return m_Nodes;
 #endif
 }
-dynamic_array<char>& TypeTree::GetStringData() const {
+dynamic_array<char>& TypeTree::GetStringData() {
 #ifdef UNITY_2019_1_OR_NEWER
 	return Data->m_StringData;
 #else
 	return m_StringData;
 #endif
 }
-dynamic_array<void*>& TypeTree::GetByteOffsets() const {
+dynamic_array<void*>& TypeTree::GetByteOffsets() {
 #ifdef UNITY_2019_1_OR_NEWER
 	return Data->m_ByteOffsets;
 #else
@@ -25,7 +25,7 @@ dynamic_array<void*>& TypeTree::GetByteOffsets() const {
 
 
 }
-std::string TypeTree::Dump(char* globalBuf) const {
+std::string TypeTree::Dump(char* globalBuf) {
 	std::string result{};
 	char debug[512];
 	memset(debug, 0, 512);
@@ -55,7 +55,7 @@ std::string TypeTree::Dump(char* globalBuf) const {
 	}
 	return result;
 }
-void TypeTree::Write(FILE* file) const
+void TypeTree::Write(FILE* file)
 {
 	fwrite(&GetNodes().size, 4, 1, file);
 	fwrite(&GetStringData().size, 4, 1, file);
