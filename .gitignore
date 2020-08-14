@@ -72,15 +72,5 @@ crashlytics-build.properties
 /PdbService/bin
 /PdbService/obj
 /NativeTypeTreeTools/NativeTypeTreeTools/Defines.h
-/Assets/Plugins/Managed/Dia2Lib.dll
-/Assets/Plugins/Managed/Dia2Lib.dll.meta
 /Assets/Plugins/Managed/TypeTreeTools.dll
 /Assets/Plugins/Managed/TypeTreeTools.dll.meta
-/Assets/Plugins/x86/msdia140.dll
-/Assets/Plugins/x86/msdia140.dll.meta
-/Assets/Plugins/x86_64/msdia140.dll
-/Assets/Plugins/x86_64/msdia140.dll.meta
-*.props
-/Assets/Plugins/x86.meta
-/Assets/Plugins/x86_64/EasyHook64.dll.meta
-/Assets/Plugins/x86_64/EasyLoad64.dll.meta
