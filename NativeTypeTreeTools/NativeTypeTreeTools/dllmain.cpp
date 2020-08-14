@@ -293,8 +293,98 @@ extern "C" {
         }
         CloseLog();
     }
-	EXPORT void ExportStructData(const char* moduleName) {
+	EXPORT void ExportStructData(const char* moduleName, const char* unityVersion, uint32_t runtimePlatform) {
+		InitBindings(moduleName);
+		if (gRuntimeTypeArray != NULL) {
+			Log("Dumping %d types\n", gRuntimeTypeArray->count);
+			CreateDirectory(L"Output", NULL);
+			FILE* file = fopen("Output/structs.dat", "wb");
 
+			fprintf(file, unityVersion);
+			fwrite(&runtimePlatform, 4, 1, file);
+			bool hasTypeTrees = true;
+			fwrite(&hasTypeTrees, 1, 1, file);
+			int typeCount = 0;
+			fpos_t countPos = 0;
+			fgetpos(file, &countPos);
+			fwrite(&typeCount, 4, 1, file);
+			Log("Writing RunTimeTypes\n");
+			for (int i = 0; i < gRuntimeTypeArray->count; i++) {
+				RTTIClass* type = gRuntimeTypeArray->Types[i];
+				RTTIClass* iter = type;
+				Log("Type %d Child Class %s, %s, %s, %d, %d\n",
+					i,
+					type->classNamespace ,
+					type->className,
+					type->module,
+					type->persistentTypeID,
+					type->size);
+				Log("Type %d getting base type", i);
+				while (iter != NULL && iter->isAbstract) {
+					iter = iter->base;
+				}
+				if (iter == NULL) continue;
+				Log("Type %d BaseType is %s %s %s %d %d\n",
+					i,
+					iter->classNamespace,
+					iter->className,
+					iter->module,
+					iter->persistentTypeID,
+					iter->size);
+				Log("Type %d Getting native object\n", i);
+				Object* obj = GetOrProduce(iter, 0, ObjectCreationMode::Default);
+				if (obj == NULL) {
+					Log("Type %d %s: Produced null object\n", i, iter->className);
+					continue;
+				}
+				Log("Type %d: Produced object %d\n", i, obj->instanceID);
+				Log("Type %d Getting Type Tree\n", i);
+
+				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
+#if defined(UNITY_2019_1) || defined(UNITY_2019_2)
+				TypeTree__TypeTree(typeTree, kMemTypeTree, false);
+#else
+				TypeTree__TypeTree(typeTree, kMemTypeTree);
+#endif
+				Log("Type %d %s: Calling GetTypeTree.\n", i, type->className);
+#ifdef UNITY_2019_1_OR_NEWER
+				if (!GetTypeTree(obj, TransferInstructionFlags::SerializeGameRelease, typeTree)) {
+					Log("Error calling GetTypeTree\n");
+				}
+#else
+				GenerateTypeTree(obj, typeTree, TransferInstructionFlags::SerializeGameRelease);
+#endif
+				Log("Type %d Getting PersistentTypeID", i);
+				fwrite(&iter->persistentTypeID, sizeof(iter->persistentTypeID), 1, file);
+				Log("Type %d Getting GUID\n", i);
+				for (int j = 0, n = (int)iter->persistentTypeID < 0 ? 0x20 : 0x10; j < n; ++j) {
+					char fakeGuid = 0;
+					fwrite(&fakeGuid, sizeof(fakeGuid), 1, file);
+				}
+				Log("Type %d Creating Binary Dump\n");
+				typeTree->Write(file);
+				typeCount++;
+
+				if (!obj->IsPersistent() &&
+					type->persistentTypeID != PersistentTypeID::SpriteAtlasDatabase &&
+					type->persistentTypeID != PersistentTypeID::SceneVisibilityState &&
+					type->persistentTypeID != PersistentTypeID::InspectorExpandedState &&
+					type->persistentTypeID != PersistentTypeID::AnnotationManager &&
+					type->persistentTypeID != PersistentTypeID::MonoManager)
+				{
+					Log("Getting MonoObject for %d %s - instanceID %d.\n", i, type->className, obj->instanceID);
+					MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(obj->instanceID);
+					Log("Destroying MonoObject. Exists %d\n", managed != NULL);
+					Object_CUSTOM_DestroyImmediate(managed, false);
+				}
+			}
+			int zero = 0;
+			fwrite(&zero, 4, 1, file);
+			fsetpos(file, &countPos);
+			fwrite(&typeCount, 4, 1, file);
+			fclose(file);
+		}
+		CloseLog();
 	}
 	EXPORT void ExportStructDump(const char* moduleName) {
 		InitBindings(moduleName);
@@ -336,7 +426,7 @@ extern "C" {
 					Log("Could not find concrete type for %d %s\n", i, type->className);
 					continue;
 				}
-				MemLabelId label{};
+
 				Object* obj = GetOrProduce(type, 0, ObjectCreationMode::Default);
 				if (obj == NULL) {
 					Log("Type %d %s: Produced null object\n", i, iter->className);
@@ -346,8 +436,6 @@ extern "C" {
 					Log("Type %d %s: Generating type. PersistentId %d, Persistent %d\n", i, type->className, type->persistentTypeID, obj->IsPersistent());
 				}
 				TypeTree* typeTree = (TypeTree*)malloc(sizeof(TypeTree));
-				MemLabelId memId;
-                memId.identifier = (MemLabelIdentifier)0x32; //kMemMonoCodeId
 #if defined(UNITY_2019_1) || defined(UNITY_2019_2)
 				TypeTree__TypeTree(typeTree, kMemTypeTree, false);
 #else
@@ -356,7 +444,7 @@ extern "C" {
 				Log("Type %d %s: Calling GetTypeTree.\n", i, type->className);
 #ifdef UNITY_2019_1_OR_NEWER
 				if (!GetTypeTree(obj, TransferInstructionFlags::SerializeGameRelease, typeTree)) {
-					Log("Error calling GetTypeTree");
+					Log("Error calling GetTypeTree\n");
 				}
 #else
 				GenerateTypeTree(obj, typeTree, TransferInstructionFlags::SerializeGameRelease);
@@ -367,8 +455,7 @@ extern "C" {
 					type->persistentTypeID != PersistentTypeID::SceneVisibilityState &&
 					type->persistentTypeID != PersistentTypeID::InspectorExpandedState &&
 					type->persistentTypeID != PersistentTypeID::AnnotationManager &&
-					type->persistentTypeID != PersistentTypeID::MonoManager &&
-					type->persistentTypeID != PersistentTypeID::AssetBundle)
+					type->persistentTypeID != PersistentTypeID::MonoManager)
                 {
                     Log("Getting MonoObject for %d %s - instanceID %d.\n", i, type->className, obj->instanceID);
                     MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(obj->instanceID);

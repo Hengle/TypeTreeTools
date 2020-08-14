@@ -15,7 +15,7 @@ namespace TypeTreeTools
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void ExportClassesJson(string modulePath);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        delegate void ExportStructData(string modulePath);
+        delegate void ExportStructData(string modulePath, string unityVersion, uint runtimePlatform);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate void ExportStructDump(string modulePath);
         [MenuItem("Tools/Dump/Export String Data")]
@@ -31,7 +31,9 @@ namespace TypeTreeTools
         [MenuItem("Tools/Dump/Export Struct Data")]
         static void DoExportStructData()
         {
-            Invoke<ExportStructData>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName);
+            Invoke<ExportStructData>(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName,
+                Application.unityVersion,
+                (uint)Application.platform);
         }
         [MenuItem("Tools/Dump/Export Struct Dump")]
         static void DoExportStructDump()
