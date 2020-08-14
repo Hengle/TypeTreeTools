@@ -160,7 +160,7 @@ namespace TypeTreeTools
                     iter = iter->Base;
                 }
 
-                var obj = NativeObject.GetOrProduce(*type);
+                var obj = NativeObject.GetOrProduce(*iter);
                 if(obj == null)
                 {
                     Log.WriteLine("Type {0} {1}: Produced null object", i, Marshal.PtrToStringAnsi(type->ClassName));
