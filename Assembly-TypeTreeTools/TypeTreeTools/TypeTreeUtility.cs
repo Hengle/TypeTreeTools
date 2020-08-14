@@ -39,14 +39,14 @@ namespace TypeTreeTools
 
         public static void CreateTextDump(TypeTree tree, TextWriter writer)
         {
-#if UNITY_2019_1_0_OR_NEWER
+#if UNITY_2019_1_OR_NEWER
             var iterator = new TypeTreeIterator(&tree);
             TextDumpNodes(iterator, writer);
 #else
             TextDumpNodes(tree, writer);
 #endif
         }
-        #if UNITY_2019_1_0_OR_NEWER
+#if UNITY_2019_1_OR_NEWER
         static void TextDumpNodes(TypeTreeIterator it, TextWriter writer)
         {
             while (!it.IsNull)
