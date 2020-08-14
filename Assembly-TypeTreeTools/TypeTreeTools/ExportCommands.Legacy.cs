@@ -30,17 +30,21 @@ namespace TypeTreeTools
         [MenuItem("Tools/Type Tree/Legacy/Export Classes JSON")]
         static void ExportClassesJson()
         {
-            var dictionary = new Dictionary<int, string>();
-
+            Directory.CreateDirectory(OutputDirectory);
+            using var tw = new StreamWriter(Path.Combine(OutputDirectory, "classes.json"));
+            tw.WriteLine("{");
             for (int i = 0; i < RuntimeTypes.Count; i++)
             {
                 var type = RuntimeTypes.Types[i];
                 var name = Marshal.PtrToStringAnsi(type->ClassName);
-                dictionary.Add((int)type->PersistentTypeID, name);
+                tw.Write("  \"{0}\": \"{1}\"",
+                     (int)type->PersistentTypeID, name);
+                if(i < RuntimeTypes.Count - 1){
+                    tw.Write(",");
+                }
+                tw.WriteLine();
             }
-
-            Directory.CreateDirectory(OutputDirectory);
-            File.WriteAllText(Path.Combine(OutputDirectory, "classes.json"), JsonConvert.SerializeObject(dictionary));
+            tw.WriteLine("}");
         }
         [MenuItem("Tools/Type Tree/Legacy/Export Struct Data")]
         static unsafe void ExportStructData()
