@@ -40,7 +40,7 @@ namespace Unity.Core
 
         public DynamicArray<uint> ByteOffsets =>
 #if UNITY_2019_1_OR_NEWER
-                Data->Nodes;
+                Data->ByteOffsets;
 #else
                 m_ByteOffsets;
 #endif
