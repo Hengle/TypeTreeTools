@@ -9,6 +9,7 @@ namespace TypeTreeTools
     {
         public static void CreateBinaryDump(TypeTree tree, BinaryWriter writer)
         {
+#if UNITY_2019_1_OR_NEWER
             writer.Write(tree.Nodes.Size);
             writer.Write(tree.StringBuffer.Size);
 
@@ -17,6 +18,24 @@ namespace TypeTreeTools
 
             for (ulong i = 0, n = tree.StringBuffer.Size; i < n; i++)
                 writer.Write(tree.StringBuffer.Ptr[i]);
+#else
+            writer.Write(tree.Nodes.Size);
+            writer.Write(tree.StringBuffer.Size);
+            for (ulong i = 0, n = tree.Nodes.Size; i < n; i++)
+            {
+                var node = tree.Nodes.Ptr[i];
+                writer.Write(node.Version);
+                writer.Write(node.Level);
+                writer.Write((byte)node.TypeFlags);
+                writer.Write(node.TypeStrOffset);
+                writer.Write(node.NameStrOffset);
+                writer.Write(node.ByteSize);
+                writer.Write(node.Index);
+                writer.Write((int)node.MetaFlag);
+            }
+            for (ulong i = 0, n = tree.StringBuffer.Size; i < n; i++)
+                writer.Write(tree.StringBuffer.Ptr[i]);
+#endif
         }
 
         static void BinaryDumpNodes(TypeTreeIterator it, BinaryWriter writer)
@@ -83,24 +102,24 @@ namespace TypeTreeTools
                     writer.Write("  ");
                 string type = null;
                 string name = null;
-                if(node.TypeStrOffset < 0)
+                if(node.TypeStrOffset > int.MaxValue)
                 {
-                    var addr = new IntPtr((*CommonString.BufferBegin).ToInt64() + (0x7fffffff & node.TypeStrOffset));
-                    type = Marshal.PtrToStringAnsi(addr);
+                    var addr = (*CommonString.BufferBegin).ToInt64() + (0x7fffffff & node.TypeStrOffset);
+                    type = Marshal.PtrToStringAnsi(new IntPtr(addr));
                 } else
                 {
                     var addr = &tree.StringBuffer.Ptr[node.TypeStrOffset];
                     type = Marshal.PtrToStringAnsi(new IntPtr(addr));
                 }
-                if (node.NameStrOffset < 0)
+                if (node.NameStrOffset > int.MaxValue)
                 {
-                    var addr = new IntPtr((*CommonString.BufferBegin).ToInt64() + (0x7fffffff & node.NameStrOffset));
-                    type = Marshal.PtrToStringAnsi(addr);
+                    var addr = (*CommonString.BufferBegin).ToInt64() + (0x7fffffff & node.NameStrOffset);
+                    name = Marshal.PtrToStringAnsi(new IntPtr(addr));
                 }
                 else
                 {
                     var addr = &tree.StringBuffer.Ptr[node.NameStrOffset];
-                    type = Marshal.PtrToStringAnsi(new IntPtr(addr));
+                    name = Marshal.PtrToStringAnsi(new IntPtr(addr));
                 }
                 writer.WriteLine(string.Format("{0} {1} // ByteSize{{{2}}}, Index{{{3}}}, IsArray{{{4}}}, MetaFlag{{{5}}}",
                     type,
