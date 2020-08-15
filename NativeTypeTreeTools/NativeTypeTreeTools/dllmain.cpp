@@ -52,7 +52,8 @@ TypeTree__TypeTree_t TypeTree__TypeTree;
 #ifdef UNITY_2019_1_OR_NEWER
 typedef bool(__cdecl* GetTypeTree_t)(Object* obj, TransferInstructionFlags flags, TypeTree* tree);
 GetTypeTree_t GetTypeTree;
-
+#endif
+#ifdef UNITY_2018_1_OR_NEWER
 typedef Object*(__cdecl* GetSpriteAtlasDatabase_t)(void);
 GetSpriteAtlasDatabase_t GetSpriteAtlasDatabase;
 
@@ -94,9 +95,7 @@ void InitBindings(const char* moduleName) {
 	importer.AssignAddress("??0TypeTree@@QEAA@AEBUMemLabelId@@@Z",
 		(void*&)TypeTree__TypeTree);
 #endif
-#ifdef UNITY_2019_1_OR_NEWER
-	importer.AssignAddress("?GetTypeTree@TypeTreeCache@@YA_NPEBVObject@@W4TransferInstructionFlags@@AEAVTypeTree@@@Z",
-		(void*&)GetTypeTree);
+#ifdef UNITY_2018_1_OR_NEWER
 	importer.AssignAddress("?GetSpriteAtlasDatabase@@YAAEAVSpriteAtlasDatabase@@XZ",
 		(void*&)GetSpriteAtlasDatabase);
 	importer.AssignAddress("?GetSceneVisibilityState@@YAAEAVSceneVisibilityState@@XZ",
@@ -107,6 +106,10 @@ void InitBindings(const char* moduleName) {
 		(void*&)GetAnnotationManager);
 	importer.AssignAddress("?GetMonoManager@@YAAEAVMonoManager@@XZ",
 		(void*&)GetMonoManager);
+#endif
+#ifdef UNITY_2019_1_OR_NEWER
+	importer.AssignAddress("?GetTypeTree@TypeTreeCache@@YA_NPEBVObject@@W4TransferInstructionFlags@@AEAVTypeTree@@@Z",
+		(void*&)GetTypeTree);
 	importer.AssignAddress("?EditorUtility_CUSTOM_InstanceIDToObject@@YAPEAVScriptingBackendNativeObjectPtrOpaque@@H@Z",
 		(void*&)EditorUtility_CUSTOM_InstanceIDToObject);
 	importer.AssignAddress("?Object_CUSTOM_DestroyImmediate@@YAXPEAVScriptingBackendNativeObjectPtrOpaque@@E@Z",
@@ -121,7 +124,7 @@ void InitBindings(const char* moduleName) {
 #endif
 }
 Object* GetOrProduce(RTTIClass * type, int instanceID, ObjectCreationMode creationMode) {
-#ifdef UNITY_2019_1_OR_NEWER
+#ifdef UNITY_2018_1_OR_NEWER
 	switch(type->persistentTypeID)
 	{
 		case PersistentTypeID::SpriteAtlasDatabase:
@@ -370,7 +373,8 @@ extern "C" {
 					type->persistentTypeID != PersistentTypeID::SceneVisibilityState &&
 					type->persistentTypeID != PersistentTypeID::InspectorExpandedState &&
 					type->persistentTypeID != PersistentTypeID::AnnotationManager &&
-					type->persistentTypeID != PersistentTypeID::MonoManager)
+					type->persistentTypeID != PersistentTypeID::MonoManager &&
+					type->persistentTypeID != PersistentTypeID::AssetBundle)
 				{
 					Log("Getting MonoObject for %d %s - instanceID %d.\n", i, type->className, obj->instanceID);
 					MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(obj->instanceID);
@@ -417,17 +421,16 @@ extern "C" {
 				}
 				fprintf(file, "\n// classID{%d}: %s\n", type->persistentTypeID, inheritance.c_str());
 				iter = type;
-				while (iter->isAbstract) {
+				while (iter != NULL && iter->isAbstract) {
 					fprintf(file, "// %s is abstract\n", iter->className);
-					if (iter->base == NULL) break;
 					iter = iter->base;
 				}
-				if (iter == NULL || iter->isAbstract) {
+				if (iter == NULL) {
 					Log("Could not find concrete type for %d %s\n", i, type->className);
 					continue;
 				}
 
-				Object* obj = GetOrProduce(type, 0, ObjectCreationMode::Default);
+				Object* obj = GetOrProduce(iter, 0, ObjectCreationMode::Default);
 				if (obj == NULL) {
 					Log("Type %d %s: Produced null object\n", i, iter->className);
 					continue;
@@ -455,7 +458,8 @@ extern "C" {
 					type->persistentTypeID != PersistentTypeID::SceneVisibilityState &&
 					type->persistentTypeID != PersistentTypeID::InspectorExpandedState &&
 					type->persistentTypeID != PersistentTypeID::AnnotationManager &&
-					type->persistentTypeID != PersistentTypeID::MonoManager)
+					type->persistentTypeID != PersistentTypeID::MonoManager &&
+					type->persistentTypeID != PersistentTypeID::AssetBundle)
                 {
                     Log("Getting MonoObject for %d %s - instanceID %d.\n", i, type->className, obj->instanceID);
                     MonoObject* managed = EditorUtility_CUSTOM_InstanceIDToObject(obj->instanceID);
