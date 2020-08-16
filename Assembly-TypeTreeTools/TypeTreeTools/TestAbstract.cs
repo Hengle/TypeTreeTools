@@ -1,4 +1,6 @@
-﻿using Dia2Lib;
+﻿//Note Unity 2017 and lower do not contain the Unity.Collections and Unity.Collections.LowLevel.Unsafe namespace
+#if UNITY_2018_1_OR_NEWER
+using Dia2Lib;
 using EasyHook;
 using JetBrains.Annotations;
 using System;
@@ -171,3 +173,4 @@ namespace TypeTreeTools
         }
     }
 }
+#endif

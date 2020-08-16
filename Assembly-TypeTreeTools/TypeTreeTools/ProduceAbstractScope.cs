@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_2018_1_OR_NEWER
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Dia2Lib;
@@ -213,3 +214,4 @@ namespace TypeTreeTools
         }
     }
 }
+#endif
