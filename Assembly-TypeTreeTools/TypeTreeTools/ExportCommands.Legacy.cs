@@ -25,6 +25,8 @@ namespace TypeTreeTools
             File.WriteAllBytes(Path.Combine(OutputDirectory, "strings.dat"), buffer);
         }
 
+        // Unity 2018.2.0 and lower do not support Newtonsoft.Json
+        // Easier to export json with a plain streamwriter
         [MenuItem("Tools/Type Tree/Legacy/Export Classes JSON")]
         static void ExportClassesJson()
         {
