@@ -34,8 +34,13 @@ namespace TypeTreeTools
                 result.Add(reference.Location);
             }
             return result.Distinct().ToArray();
+#elif UNITY_2018_1
+            // Unity 2018.1.0 has a bug where assemblyReferences contains null elements
+            // allReferences is a product of compiledAssemblyReferences and assemblyReferences
+            // so calling assemblyReferences throws a null reference exception
+            return assembly.compiledAssemblyReferences;
 #else
-        return assembly.allReferences;
+            return assembly.allReferences;
 #endif
         }
         [MenuItem("Tools/Build TypeTreeTools.dll")]
@@ -82,7 +87,9 @@ namespace TypeTreeTools
                     xw.WriteEndElement();
 
                     xw.WriteStartElement("ItemGroup");
-                    foreach (var reference in GetDependencies(assembly))
+                    var assemblies = GetDependencies(assembly);
+                    UnityEngine.Debug.Log(string.Format("Found {0} assemblies", assemblies.Length));
+                    foreach (var reference in assemblies)
                     {
                         var name = Path.GetFileNameWithoutExtension(reference);
                         var path = Path.GetFullPath(reference);
