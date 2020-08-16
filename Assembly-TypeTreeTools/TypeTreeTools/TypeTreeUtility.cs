@@ -92,8 +92,8 @@ namespace TypeTreeTools
                 it = it.GetNext();
             }
         }
-#else
-        static void TextDumpNodes(TypeTree tree, TextWriter writer)
+#endif
+        public static void TextDumpNodes(TypeTree tree, TextWriter writer)
         {
             for (int i = 0; i < (int)tree.Nodes.Size; i++)
             {
@@ -131,6 +131,5 @@ namespace TypeTreeTools
                 ));
             }
         }
-#endif
     }
 }

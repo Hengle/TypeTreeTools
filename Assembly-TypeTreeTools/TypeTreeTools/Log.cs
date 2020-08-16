@@ -9,11 +9,21 @@ namespace TypeTreeTools
         {
             if(!Directory.Exists("Logs")) Directory.CreateDirectory("Logs");
             stream = new StreamWriter("Logs/TypeTreeToolsLog.txt");
-            stream.AutoFlush = true;
         }
         public static void WriteLine(string text, params object[] args)
         {
             stream.WriteLine(text, args);
+            stream.Flush();
+        }
+        public static void Reset()
+        {
+            if(stream != null)
+            {
+                stream.Flush();
+                stream.Dispose();
+                stream = new StreamWriter("Logs/TypeTreeToolsLog.txt");
+                stream.AutoFlush = true;
+            }
         }
     }
 }
