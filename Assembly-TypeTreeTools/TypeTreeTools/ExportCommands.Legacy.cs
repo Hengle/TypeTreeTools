@@ -1,11 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 using Unity.Core;
-using Newtonsoft.Json;
 
 namespace TypeTreeTools
 {
