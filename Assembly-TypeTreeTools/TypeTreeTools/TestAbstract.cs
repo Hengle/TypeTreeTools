@@ -41,7 +41,7 @@ namespace TypeTreeTools
         // ~~?VirtualRedirectTransfer@AudioBehaviour@@UEAAXAEAVGenerateTypeTreeTransfer@@@Z~~
         // ??0AudioBehaviour@@QEAA@UMemLabelId@@W4ObjectCreationMode@@@Z
         // ?GetTypeVirtualInternal@AudioBehaviour@@EEBAQEBVType@Unity@@XZ
-        [MenuItem("Tools/Type Tree/Dump Abstract")]
+        [MenuItem("Tools/Type Tree/Debug/Dump Abstract")]
         static unsafe void DumbAbstractTest()
         {
             Log.Reset();
